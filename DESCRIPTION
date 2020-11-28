@@ -1,0 +1,38 @@
+Package: FKF.SP
+Title: Fast Kalman Filtering through Sequential Processing
+Version: 0.1.0
+Authors@R: c(person("Thomas", "Aspinall", email = "tomaspinall2512@gmail.com", 
+                  role = c("aut", "cre"),
+                  comment = c(ORCID = "0000-0002-6968-1989")),
+             person("Adrian", "Gepp", email = "adgepp@bond.edu.au", 
+                  role = c("aut"),
+                  comment = c(ORCID = "0000-0003-1666-5501")),
+             person("Geoff", "Harris", email = "gharris@bond.edu.au", 
+                  role = c("aut"),
+                  comment = c(ORCID = "0000-0003-4284-8619")),
+             person("Simone", "Kelly", email = "skelly@bond.edu.au", 
+                  role = c("aut"),
+                  comment = c(ORCID = "0000-0002-6528-8557")),
+             person("Colette", "Southam", email = "csoutham@bond.edu.au", 
+                  role = c("aut"),
+                  comment = c(ORCID = "0000-0001-7263-2347")),
+             person("Bruce", "Vanstone", email = "bvanston@bond.edu.au", 
+                  role = c("aut"),
+                  comment = c(ORCID = "0000-0002-3977-2468")) )
+Description: Fast Kalman Filtering through Sequential Processing
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1.9000
+RdMacros:
+    mathjaxr,
+    Rdpack
+Imports:
+    mathjaxr,
+    Rdpack,
+    curl
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
