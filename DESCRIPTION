@@ -36,3 +36,5 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+URL: https://github.com/TomAspinall/FKF.SP
+BugReports: https://github.com/TomAspinall/FKF.SP/issues
