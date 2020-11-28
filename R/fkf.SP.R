@@ -297,7 +297,6 @@ fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt){
   if (!is.array(Tt)) error.string <- paste0(error.string, "'Tt' must be of class 'matrix' or 'array'!\n")
   if (!is.array(Zt)) error.string <- paste0(error.string, "'Zt' must be of class 'matrix' or 'array'!\n")
   if (!is.array(HHt)) error.string <- paste0(error.string, "'HHt' must be of class 'matrix' or 'array'!\n")
-  if (!is.array(GGt)) error.string <- paste0(error.string, "'GGt' must be of class 'matrix' or 'array'!\n")
   if (!is.matrix(GGt) && !is.vector(GGt)) error.string <- paste0(error.string, "'GGt' must be of class 'vector' or 'matrix'!\n")
   if (error.string != "") stop(error.string)
 
