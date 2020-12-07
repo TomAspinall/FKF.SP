@@ -149,8 +149,8 @@ only the first diagonal element of \mjeqn{F_t}{F_t} is equal to \mjeqn{F_{t,1}}{
 }
 \examples{
 
-##The following examples follow those presented within the fkf function,
-##performing computational timing comparisons between the fkf and fkf.SP functions.
+# FKF.SP is suitable for parameter estimation, and thus the following examples
+# showcase how to estimate parameters of different models.
 
 ## <-------------------------------------------------------------------------------
 ##Example 1 - ARMA(2,1) model estimation.
@@ -166,7 +166,7 @@ ma1 <- -0.2
 sigma <- sqrt(0.2)
 
 ## Sample from an ARMA(2, 1) process
-a <- arima.sim(model = list(ar = c(ar1, ar2), ma = ma1), n = n,
+a <- stats::arima.sim(model = list(ar = c(ar1, ar2), ma = ma1), n = n,
             innov = rnorm(n) * sigma)
 
 ## Create a state space representation out of the four ARMA parameters
@@ -187,49 +187,15 @@ return(list(a0 = a0, P0 = P0, ct = ct, dt = dt, Zt = Zt, Tt = Tt, GGt = GGt,
 ## The objective function passed to 'optim'
 objective <- function(theta, yt, SP = F) {
 sp <- arma21ss(theta["ar1"], theta["ar2"], theta["ma1"], theta["sigma"])
-if(SP){
  ans <- fkf.SP(a0 = sp$a0, P0 = sp$P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
                Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = yt)
  return(-ans)
- }
- else{
- ans <- fkf(a0 = sp$a0, P0 = sp$P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
-            Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = yt)
- return(-ans$logLik)
- }
 }
 
-###FKF Package:
-set.seed(1)
-start = Sys.time()
+#Estimate Parameters using the optim function:
 theta <- c(ar = c(0, 0), ma1 = 0, sigma = 1)
-fit <- optim(theta, objective, yt = rbind(a), hessian = TRUE, SP = F)
-FKF_runtime = Sys.time() - start
+ARMA_MLE <- optim(theta, objective, yt = rbind(a), hessian = TRUE, SP = T)
 
-###fkf.SP Package:
-set.seed(1)
-start = Sys.time()
-theta <- c(ar = c(0, 0), ma1 = 0, sigma = 1)
-fit <- optim(theta, objective, yt = rbind(a), hessian = TRUE, SP = T)
-fkf.SP_runtime = Sys.time() - start
-
-sp <- arma21ss(fit$par["ar1"], fit$par["ar2"], fit$par["ma1"], fit$par["sigma"])
-
-##Speed Comparison - ARMA(2,1) process (100 iterations):
-set.seed(1)
-start = Sys.time()
-for(i in 1:1e3) fkf(a0 = sp$a0, P0 = sp$P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
-                   Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = rbind(a))
-run.time_FKF = Sys.time() - start
-
-start = Sys.time()
-set.seed(1)
-for(i in 1:1e3) fkf.SP(a0 = sp$a0, P0 = sp$P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
-                      Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = rbind(a))
-run.time_fkf.SP = Sys.time() - start
-
-##Print Output:
-print(c(FKF = run.time_FKF, fkf.SP = run.time_fkf.SP))
 
 ## <-------------------------------------------------------------------------------
 #Example 2 - Nile Example:
@@ -241,32 +207,56 @@ print(c(FKF = run.time_FKF, fkf.SP = run.time_fkf.SP))
 ## Measurement equation:
 ## y[t] = alpha[t] + eps[t], eps[t] ~  N(0, GGt)
 
+yt <- Nile
 
-y <- Nile
+##Incomplete Nile Data - two NA's are present:
+yt[c(3, 10)] <- NA
 
-## Set parameters:
+## Set constant parameters:
 dt <- ct <- matrix(0)
 Zt <- Tt <- matrix(1)
-a0 <- y[1]            # Estimation of the first year flow
+a0 <- yt[1]   # Estimation of the first year flow
+P0 <- matrix(100)       # Variance of 'a0'
+
+## Parameter estimation - maximum likelihood estimation:
+##Unknown parameters initial estimates:
+GGt <- HHt <- var(yt, na.rm = TRUE) * .5
+set.seed(1)
+#Perform Maximum Likelihood Estimation
+Nile_MLE <- suppressWarnings(optim(c(HHt = HHt, GGt = GGt),
+                                  fn = function(par, ...)
+                                    -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...),
+                                  yt = rbind(yt), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                                  Zt = Zt, Tt = Tt))
+## <-------------------------------------------------------------------------------
+#Example 3 - Dimensionless Treering Example:
+## <-------------------------------------------------------------------------------
+
+## Transition equation:
+## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)
+## Measurement equation:
+## y[t] = alpha[t] + eps[t], eps[t] ~  N(0, GGt)
+
+## tree-ring widths in dimensionless units
+y <- treering
+
+## Set constant parameters:
+dt <- ct <- matrix(0)
+Zt <- Tt <- matrix(1)
+a0 <- y[1]            # Estimation of the first width
 P0 <- matrix(100)     # Variance of 'a0'
-HHt <- GGt <- var(y, na.rm = TRUE) * .5
 
-##Speed Comparison - Nile Data (10,000 iterations):
-set.seed(1)
-start = Sys.time()
-for(i in 1:1e4) fkf(a0, P0, dt, ct, Tt, Zt, HHt = matrix(fit.fkf$par[1]),
-                   GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
-run.time_FKF = Sys.time() - start
+##Time comparison - Estimate parameters 10 times:
+Treering_MLE <- suppressWarnings(optim(c(HHt = var(y, na.rm = TRUE) * .5,
+                       GGt = var(y, na.rm = TRUE) * .5),
+                     fn = function(par, ...)
+                       -fkf.SP(HHt = array(par[1],c(1,1,1)), GGt = matrix(par[2]), ...),
+                     yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                     Zt = Zt, Tt = Tt))
 
-set.seed(1)
-start = Sys.time()
-for(i in 1:1e4) fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt = matrix(fit.fkf$par[1]),
-                      GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
-run.time_fkf.SP = Sys.time() - start
-
-print(c(FKF = run.time_FKF, fkf.SP = run.time_fkf.SP))
-
-
+##Not run - Filter tree ring data with estimated parameters using the FKF package:
+#fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(fit.fkf$par[1],c(1,1,1)),
+#               GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
 }
 \references{
 Anderson, B. D. O. and Moore. J. B. (1979). \emph{Optimal Filtering} Englewood Cliffs: Prentice-Hall.

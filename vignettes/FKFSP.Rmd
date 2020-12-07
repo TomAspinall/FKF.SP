@@ -22,6 +22,8 @@ This document provides worked examples of Kalman Filtering through the FKF.SP pa
 
 ```{r setup}
 library(FKF.SP)
+##The package 'FKF' is required for this Vignette:
+# install.packages("FKF")
 library(FKF)
 ```
 
@@ -83,6 +85,7 @@ if(SP){
  else{
  ans <- - fkf(a0 = param$a0, P0 = param$P0, dt = param$dt, ct = param$ct, Tt = param$Tt,
             Zt = param$Zt, HHt = param$HHt, GGt = param$GGt, yt = yt)$logLik
+   
  }
  return(ans)
 }
