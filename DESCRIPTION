@@ -1,5 +1,5 @@
 Package: FKF.SP
-Title: Fast Kalman Filtering through Sequential Processing
+Title: Fast Kalman Filtering Through Sequential Processing
 Version: 0.1.0
 Authors@R: c(person("Thomas", "Aspinall", email = "tomaspinall2512@gmail.com", 
                   role = c("aut", "cre"),
