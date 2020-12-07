@@ -222,7 +222,8 @@ This is because the fkf function instantiates its log-likelihood score by calcul
 
 ### Speed Comparison - Nile Data (10,000 iterations):
 ```{r}
-#This test uses estimated parameters of complete data. Please run the complete chunk for a fair comparison:
+#This test uses estimated parameters of complete data. 
+#Please run the complete chunk for a fair comparison:
 
 set.seed(1)
 start = Sys.time()
@@ -275,7 +276,7 @@ run.time_FKF = Sys.time() - start
 
 start = Sys.time()
 ##When FKF.SP is input poorly specified parameters 
-##(ie. log-likelihood = NA) is outputs a warning:
+##(ie. log-likelihood = NA) is output a warning:
 set.seed(1)
 suppressWarnings(
 for(i in 1:10)  fit.fkf.SP <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
