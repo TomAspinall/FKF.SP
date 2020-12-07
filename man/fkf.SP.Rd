@@ -126,7 +126,7 @@ Where:
 \mjdeqn{v_{t,i}=y_{t,i}-\hat y_{t,i}}{A}
 \mjdeqn{F_{t,i} = Z_{t,i} P_{t,i} Z_{t,i}'+ GGt_{t,i}}{GGt\link{t,i}}
 \mjdeqn{K_{t,i} = P_{t,i} Z_{t,i}' F_{t,i}^{-1}}{A}
-\mjdeqn{i = 1, \cdots, p}{i = 1, \cdots, p}
+\mjdeqn{i = 1, \cdots, p}{i = 1, ..., p}
 
 Transition from time \mjeqn{t}{t} to \mjeqn{t+1}{t+1} occurs through the standard transition equations.
 
@@ -136,7 +136,7 @@ Transition from time \mjeqn{t}{t} to \mjeqn{t+1}{t+1} occurs through the standar
 
 The log-likelihood at time \mjeqn{t}{t} is given by:
 
-\mjdeqn{log L_t = -\frac{p}{2}log(2\pi) - \frac{1}{2}\sum_{i=1}^p(log F_i + \frac{v_i^2}{F_i})}{}
+\mjdeqn{log L_t = -\frac{p}{2}log(2\pi) - \frac{1}{2}\sum_{i=1}^p(log F_i + \frac{v_i^2}{F_i})}{log L_t = -p/2 * log(2 * pi) - 1/2 * sum_{i=1}^p (log F_i + (v_i^2)/F_i)}
 
 Where the log-likelihood of observations is:
 
