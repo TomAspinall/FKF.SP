@@ -32,8 +32,8 @@
 #'
 #'The parameters can either be constant or deterministic
 #'time-varying. Assume the number of discrete time observations is \mjeqn{n}{n}
-#'i.e. \mjeqn{y = y_t}{y = y_t} where \mjeqn{t = 1, \cdots, n}{t = 1, \cdots, n}. Let \mjeqn{m}{m} be the
-#'dimension of the state variable and \mjeqn{d}{ASCII representation} the dimension of the observations. Then, the parameters admit the following
+#'i.e. \mjeqn{y = y_t}{y = y_t} where \mjeqn{t = 1, \cdots, n}{t = 1, ..., n}. Let \mjeqn{m}{m} be the
+#'dimension of the state variable and \mjeqn{d}{d} the dimension of the observations. Then, the parameters admit the following
 #'classes and dimensions:
 #'
 #' \tabular{ll}{
@@ -61,9 +61,8 @@
 #'
 #' \tabular{lll}{
 #' \mjeqn{a_t \in R^m}{a[t] \in R^m} \tab \mjeqn{d_t \in R^m}{d[t] \in R^m} \tab \mjeqn{\eta_t \in R^m}{eta[t] \in R^m} \cr
-#' \mjeqn{T_t \in R^{m \times m}}{T[t] \in R^(m * m )} \tab \mjeqn{H_t \in R^{m \times m}}{H[t]
-#' \in R^(m * m)} \tab \cr
-#' \mjeqn{y_t \in R^d}{y[t] in R^d} \tab \mjeqn{c_t \in R^d}{c[t] \in R^d} \tab \mjeqn{\epsilon_t \in R^d}{epsilon[t] \in R^d} \cr
+#' \mjeqn{T_t \in R^{m \times m}}{T[t] \in R^(m * m )} \tab \mjeqn{H_t \in R^{m \times m}}{H[t] \in R^(m * m)} \tab \cr
+#' \mjeqn{y_t \in R^d}{y[t] \in R^d} \tab \mjeqn{c_t \in R^d}{c[t] \in R^d} \tab \mjeqn{\epsilon_t \in R^d}{epsilon[t] \in R^d} \cr
 #' \mjeqn{Z_t \in R^{d \times m}}{Z[t] \in R^(d * m)} \tab \mjeqn{G_t \in R^{d \times d}}{G[t]
 #' \in R^(d * d)} \tab
 #' }
@@ -80,20 +79,20 @@
 #'has the advantage that the function of the covariance matrix, \mjeqn{F_t}{F[t]}, becomes \mjeqn{1 \times 1}{1 * 1}, avoiding the inversion of
 #'a \mjeqn{p \times p}{p * p} matrix. This can provide computational efficiencies (especially under the case of many observations, ie. \mjeqn{p}{p} is large)
 #'
-#'The SP iteration involves treating the vector series: \mjeqn{y_1,\cdots,y_n}{y_1,\cdots,y_n} instead as the scalar series
-#'\mjeqn{y_{1,1},\cdots,y_{(1,p)},y_{2,1},\cdots,y_{(n,p_n)}}{y_{1,1},\cdots,y_{(1,p)},y_{2,1},\cdots,y_{(n,p_n )}}
+#'The SP iteration involves treating the vector series: \mjeqn{y_1,\cdots,y_n}{y_1,...,y_n} instead as the scalar series
+#'\mjeqn{y_{1,1},\cdots,y_{(1,p)},y_{2,1},\cdots,y_{(n,p_n)}}{y_{1,1},...,y_{(1,p)},y_{2,1},...,y_{(n,p_n )}}
 #'
 #'For any time point, the observation vector is given by:
 #'
-#'\mjdeqn{y_t'=(y_{(t,1)},\cdots,y_{(t,p)} )}{y_t'=(y_(t,1),\cdots,y_(t,p) )}
+#'\mjdeqn{y_t'=(y_{(t,1)},\cdots,y_{(t,p)} )}{y_t'=(y_(t,1),...,y_(t,p) )}
 #'
 #'The filtering equations are written as:
 #'
-#'\mjdeqn{a_{t,i+1} = a_{t,i} + K_{t,i} v_{t,i}}{A}
-#'\mjdeqn{P_{t,i+1} = P_{t,i} - K_{t,i} F_{t,i} K_{t,i}'}{A}
+#'\mjdeqn{a_{t,i+1} = a_{t,i} + K_{t,i} v_{t,i}}{a[t,i+1] = a[t,i] + K[t,i] v[t,i]}
+#'\mjdeqn{P_{t,i+1} = P_{t,i} - K_{t,i} F_{t,i} K_{t,i}'}{P[t,i+1] = P[t,i] - K[t,i] F[t,i] K[t,i]'}
 #'Where:
-#'\mjdeqn{\hat y_{t,i} = c_t + Z_t \cdot a_{t,i}}{^y_t = c[t] + Z[t] * a_[t,i]}
-#'\mjdeqn{v_{t,i}=y_{t,i}-\hat y_{t,i}}{A}
+#'\mjdeqn{\hat y_{t,i} = c_t + Z_t \cdot a_{t,i}}{^y[t] = c[t] + Z[t] * a[t,i]}
+#'\mjdeqn{v_{t,i}=y_{t,i}-\hat y_{t,i}}{v[t,i]=y[t,i]-\hat y[t,i]}
 #'\mjdeqn{F_{t,i} = Z_{t,i} P_{t,i} Z_{t,i}'+ GGt_{t,i}}{GGt[t,i]}
 #'\mjdeqn{K_{t,i} = P_{t,i} Z_{t,i}' F_{t,i}^{-1}}{A}
 #'\mjdeqn{i = 1, \cdots, p}{i = 1, ..., p}
@@ -106,17 +105,17 @@
 #'
 #'The log-likelihood at time \mjeqn{t}{t} is given by:
 #'
-#'\mjdeqn{log L_t = -\frac{p}{2}log(2\pi) - \frac{1}{2}\sum_{i=1}^p(log F_i + \frac{v_i^2}{F_i})}{log L_t = -p/2 * log(2 * pi) - 1/2 * sum_{i=1}^p (log F_i + (v_i^2)/F_i)}
+#'\mjdeqn{log L_t = -\frac{p}{2}log(2\pi) - \frac{1}{2}\sum_{i=1}^p(log F_i + \frac{v_i^2}{F_i})}{log L_t = -p/2 * log(2 * pi) - 1/2 * sum_(i=1)^p (log F_i + (v_i^2)/F_i)}
 #'
 #'Where the log-likelihood of observations is:
 #'
-#'\mjdeqn{log L = \sum_t^n{log L_t}}{log L = \sum_t^n{log L_t}}
+#'\mjdeqn{log L = \sum_t^n{log L_t}}{log L = \sum_t^n(log L[t])}
 #'
 #'
 #'There's several distinctions between the Multivariate Kalman Filter and the Sequential processing filtered values.
-#'The elements of the innovation vector \mjeqn{v_t}{v_t} are not the same as \mjeqn{v_{t,i}}{v[t,i]} for \mjeqn{i=1,\cdots,p}{i=1,\cdots,p}.
-#'This is also true of the diagonal elements of the variance matrix \mjeqn{F_t}{F_t} and the variances \mjeqn{F_{t,i}}{F_{t,i}}, for \mjeqn{i=1,\cdots,p}{i=1,\cdots,p};
-#'only the first diagonal element of \mjeqn{F_t}{F_t} is equal to \mjeqn{F_{t,1}}{F[t,1]}.
+#'The elements of the innovation vector \mjeqn{v_t}{v[t]} are not the same as \mjeqn{v_{t,i}}{v[t,i]} for \mjeqn{i=1,\cdots,p}{i=1,...,p}.
+#'This is also true of the diagonal elements of the variance matrix \mjeqn{F_t}{F[t]} and the variances \mjeqn{F_{t,i}}{F[t,i]}, for \mjeqn{i=1,\cdots,p}{i=1,...,p};
+#'only the first diagonal element of \mjeqn{F_t}{F[t]} is equal to \mjeqn{F_{t,1}}{F[t,1]}.
 #'
 #'@return
 #'A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman Filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
@@ -131,9 +130,9 @@
 #'When there are no missing observations (ie. "NA" values) in \code{matrix} yt, the return of function \code{fkf.SP} and the \code{logLik}
 #'object returned within the list of function \code{fkf} are identical. When there are NA values, however, the log-likelihood score returned
 #'by \code{fkf.SP} is always higher. The log-likelihood score of the \code{FKF} C code is instantiated through the calculation of
-#'\mjeqn{- n \times d \times log(2\pi)}{ASCII representation}, where \mjeqn{n}{ASCII representation} is the number of columns of \code{matrix}
-#'\code{yt} and \mjeqn{d}{ASCII representation} is the number of rows of \code{matrix} \code{yt}. Under the assumption that there are
-#'missing observations, \mjeqn{d}{ASCII representation} would instead become \mjeqn{d_t}{ASCII representation}, where \mjeqn{d_t \leq d \forall t}{ASCII representation}.
+#'\mjeqn{- n \times d \times log(2\pi)}{- n * d * log(2\pi)}, where \mjeqn{n}{n} is the number of columns of \code{matrix}
+#'\code{yt} and \mjeqn{d}{d} is the number of rows of \code{matrix} \code{yt}. Under the assumption that there are
+#'missing observations, \mjeqn{d}{d} would instead become \mjeqn{d_t}{d_t}, where \mjeqn{d_t \leq d \forall t}{d_t <= d forall t}.
 #'Whilst this doesn't influence parameter estimation, because observation matrix \code{yt} and thus the offset resulting from this is kept constant during maximum likelihood estimation,
 #'this does result in low bias of the log-likelihood scores output by the \code{fkf} function.
 #'
