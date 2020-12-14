@@ -50,7 +50,8 @@ this does result in low bias of the log-likelihood scores output by the \code{fk
 The \code{fkf.SP} function performs fast and flexible Kalman Filtering using Sequential Processing. It is designed for efficient parameter
 estimation through maximum likelihood estimation. \code{fkf.SP} wraps the C-function \code{fkf_SP} which relies upon the linear algebra subroutines of BLAS.
 Sequential Processing is a univariate treatment of a multivariate series of observations and can benefit from computational efficiencies over
-traditional Kalman Filtering. \code{fkf.SP} is based from the \code{fkf} function of the \code{FKF} package but, in general, is a faster Kalman Filtering method.
+traditional Kalman Filtering. \code{fkf.SP} is based from the \code{fkf} function of the \code{FKF} package, sharing identical arguments except for the \code{GGt} argument (see \bold{arguments}).
+The \code{fkf.SP} function is, in general, a faster Kalman Filtering method than the \code{fkf} function.
 fkf.SP is compatible with missing observations.
 }
 \details{
