@@ -13,7 +13,7 @@ fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt)
 
 \item{dt}{A \code{matrix} giving the intercept of the transition equation}
 
-\item{ct}{A \code{matrix} giving the intercept of the measaurement equation}
+\item{ct}{A \code{matrix} giving the intercept of the measurement equation}
 
 \item{Tt}{An \code{array} giving factor of the transition equation}
 
@@ -80,7 +80,7 @@ classes and dimensions:
 
 \bold{State Space Form}
 
-The following notation follows that of Koopman \emph{et al.} (1999) and the documentation of the \code{fkf} function. The Kalman Filter is characterised by the transition and measurement equations:
+The following notation follows that of Koopman \emph{et al.} (1999) and the documentation of the \code{fkf} function. The Kalman Filter is characterized by the transition and measurement equations:
 
 \mjdeqn{\alpha_{t + 1} = d_t + T_t \cdot \alpha_t + H_t \cdot \eta_t}{alpha(t + 1) = d(t) + T(t) alpha(t) + H(t) * eta(t)}
 \mjdeqn{y_t = c_t + Z_t \cdot \alpha_t + G_t \cdot \epsilon_t}{y(t) = c(t) + Z(t) alpha(t) + G(t) * epsilon(t)}
