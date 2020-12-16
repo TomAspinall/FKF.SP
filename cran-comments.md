@@ -1,3 +1,13 @@
+## Resubmission
+
+This is a resubmission. In this version I have:
+
+* Only capitalized sentence beginnings and names in the description text.
+
+* Written package names in single quotes in title and description
+
+* Included a method that describes the methods in the package in the description field of the DESCRIPTION file.
+
 ## Test environments
 - local R installation, R 4.0.2
 - win-builder (devel)
