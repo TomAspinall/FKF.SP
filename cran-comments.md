@@ -20,15 +20,12 @@ On windows-x86_64-devel (r-devel), ubuntu-gcc-release (r-release), fedora-clang-
   checking CRAN incoming feasibility ... NOTE
   Maintainer: 'Thomas Aspinall <tomaspinall2512@gmail.com>'
   
-  New submission
-  
   Possibly mis-spelled words in DESCRIPTION:
   Durbin (27:444)
-  FKF (27:28, 27:212, 27:247)
-  Kalman (2:13)
-  Koopman (27:455)
+  Kalman (2:13, 27:32, 27:302)
+  Koopman (27:455)  
   
-* These words have been spelt correctly.
+* These are names and have been spelt correctly.
 
 ## Downstream Dependencies
 
