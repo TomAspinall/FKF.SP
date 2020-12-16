@@ -2,11 +2,7 @@
 
 This is a resubmission. In this version I have:
 
-* Only capitalized sentence beginnings and names in the description text.
-
-* Written package names in single quotes in title and description
-
-* Included a method that describes the methods in the package in the description field of the DESCRIPTION file.
+* Capitalized names in the description text (kalman --> Kalman).
 
 ## Test environments
 - local R installation, R 4.0.2
@@ -27,9 +23,11 @@ On windows-x86_64-devel (r-devel), ubuntu-gcc-release (r-release), fedora-clang-
   New submission
   
   Possibly mis-spelled words in DESCRIPTION:
-    FKF (27:28, 27:212, 27:247)
-    Kalman (2:13, 27:64, 27:330)
-
+  Durbin (27:444)
+  FKF (27:28, 27:212, 27:247)
+  Kalman (2:13)
+  Koopman (27:455)
+  
 * These words have been spelt correctly.
 
 ## Downstream Dependencies
