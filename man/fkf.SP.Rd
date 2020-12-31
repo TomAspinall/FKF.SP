@@ -21,49 +21,50 @@ fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt)
 
 \item{HHt}{An \code{array} giving the variance of the innovations of the transition equation}
 
-\item{GGt}{A \code{vector} giving the diagonal elements of the \code{matrix} for the variance of the disturbances of the measurement equation. Covariance between disturbances
-is not supported under the Sequential Processing method.}
+\item{GGt}{A \code{vector} giving the diagonal elements of the \code{matrix} for the variance of disturbances of the measurement equation. Covariance between disturbances
+is not supported under the sequential processing method.}
 
 \item{yt}{A \code{matrix} containing the observations. "NA"- values are allowed}
 }
 \value{
-A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman Filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
+A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
 
 \bold{fkf and fkf.SP values}:
 
 Outputs of the \code{fkf} and \code{fkf.SP} functions differ slightly in that \code{fkf} returns a list object of filtered values returned by the
 algorithm, whereas \code{fkf.SP} returns only a \code{numeric} value corresponding to the log-likelihood returned by the filter. \code{fkf}
-is thus appropriate when filtered values are required and \code{fkf.SP} is appropriate for parameter estimation through maximum likelihood
-methods.
+is thus appropriate when filtered values are required and \code{fkf.SP} is appropriate for efficient parameter estimation through maximum likelihood
+estimation.
 
-When there are no missing observations (ie. "NA" values) in \code{matrix} yt, the return of function \code{fkf.SP} and the \code{logLik}
-object returned within the list of function \code{fkf} are identical. When there are NA values, however, the log-likelihood score returned
-by \code{fkf.SP} is always higher. The log-likelihood score of the \code{FKF} C code is instantiated through the calculation of
-\mjeqn{- n \times d \times log(2\pi)}{- n * d * log(2\pi)}, where \mjeqn{n}{n} is the number of columns of \code{matrix}
-\code{yt} and \mjeqn{d}{d} is the number of rows of \code{matrix} \code{yt}. Under the assumption that there are
+\bold{Log-Likelihood Values:}
+
+When there are no missing observations (i.e. "NA" values) in argument \code{yt}, the return of function \code{fkf.SP} and the \code{logLik}
+object returned within the list of function \code{fkf} are identical. When NA's are present, however, log-likelihood values returned
+by \code{fkf.SP} are always higher. The log-likelihood value of the C code of \code{FKF} is instantiated through the calculation of the first term of the log-likelihood function,
+\mjeqn{- 0.5 \times n \times d \times log(2\pi)}{- 0.5 * n * d * log(2 PI)}, where \mjeqn{n}{n} is the number of columns of argument
+\code{yt} and \mjeqn{d}{d} is the number of rows of argument \code{yt}. Under the assumption that there are
 missing observations, \mjeqn{d}{d} would instead become \mjeqn{d_t}{d_t}, where \mjeqn{d_t \leq d \forall t}{d_t <= d forall t}.
 Whilst this doesn't influence parameter estimation, because observation matrix \code{yt} and thus the offset resulting from this is kept constant during maximum likelihood estimation,
-this does result in low bias of the log-likelihood scores output by the \code{fkf} function.
+this does result in low bias of the log-likelihood values output by \code{fkf}.
 }
 \description{
 \loadmathjax
-The \code{fkf.SP} function performs fast and flexible Kalman Filtering using Sequential Processing. It is designed for efficient parameter
-estimation through maximum likelihood estimation. \code{fkf.SP} wraps the C-function \code{fkf_SP} which relies upon the linear algebra subroutines of BLAS.
-Sequential Processing is a univariate treatment of a multivariate series of observations and can benefit from computational efficiencies over
-traditional Kalman Filtering. \code{fkf.SP} is based from the \code{fkf} function of the \code{FKF} package, sharing identical arguments except for the \code{GGt} argument (see \bold{arguments}).
-The \code{fkf.SP} function is, in general, a faster Kalman Filtering method than the \code{fkf} function.
-fkf.SP is compatible with missing observations.
+The \code{fkf.SP} function performs fast and flexible Kalman filtering using sequential processing. It is designed for efficient parameter
+estimation through maximum likelihood estimation. \code{fkf.SP} wraps the C-function \code{fkf_SP} which relies upon the linear algebra subroutines of BLAS (Basic Linear Algebra Subprograms).
+Sequential processing (SP) is a univariate treatment of a multivariate series of observations that increases computational efficiency over traditional Kalman filtering in the general case. SP takes
+the additional assumption that the variance of disturbances in the measurement equation are independent. \code{fkf.SP} is based from the \code{fkf} function of the \code{FKF} package but is, in general, a faster Kalman filtering method.
+\code{fkf} and \code{fkf.SP} share identical arguments (except for the \code{GGt} argument, see \bold{arguments}). \code{fkf.SP} is compatible with missing observations (i.e. NA's in argument \code{yt}).
 }
 \details{
 \bold{Parameters}:
 
-The \code{fkf.SP} function builds upon the \code{fkf} function of the \code{FKF} package by adjusting the Kalman Filtering algorithm to
-utilize sequential processing. The \code{fkf.SP} and \code{fkf} functions feature highly similar
+The \code{fkf.SP} function builds upon the \code{fkf} function of the \code{FKF} package by adjusting the Kalman filtering algorithm to
+utilize SP. The \code{fkf.SP} and \code{fkf} functions feature highly similar
 arguments for compatibility purposes; only argument \code{GGt} has changed from an \code{array} type object to a \code{vector} or \code{matrix} type object.
 The \code{fkf.SP} function takes the additional assumption over the \code{fkf} function that the variance of the disturbances of the measurement
-equation are independent; a requirement of sequential processing (see below).
+equation are independent; a requirement of SP (see below).
 
-The parameters can either be constant or deterministic
+Parameters can either be constant or deterministic
 time-varying. Assume the number of discrete time observations is \mjeqn{n}{n}
 i.e. \mjeqn{y = y_t}{y = y_t} where \mjeqn{t = 1, \cdots, n}{t = 1, ..., n}. Let \mjeqn{m}{m} be the
 dimension of the state variable and \mjeqn{d}{d} the dimension of the observations. Then, the parameters admit the following
@@ -81,13 +82,13 @@ classes and dimensions:
 
 \bold{State Space Form}
 
-The following notation follows that of Koopman \emph{et al.} (1999) and the documentation of the \code{fkf} function. The Kalman Filter is characterized by the transition and measurement equations:
+The following notation follows that of Koopman \emph{et al.} (1999) and the documentation of the \code{fkf} function. The Kalman filter is characterized by the transition and measurement equations:
 
 \mjdeqn{\alpha_{t + 1} = d_t + T_t \cdot \alpha_t + H_t \cdot \eta_t}{alpha(t + 1) = d(t) + T(t) alpha(t) + H(t) * eta(t)}
 \mjdeqn{y_t = c_t + Z_t \cdot \alpha_t + G_t \cdot \epsilon_t}{y(t) = c(t) + Z(t) alpha(t) + G(t) * epsilon(t)}
 
-where \mjeqn{\eta_t}{eta(t)} and \mjeqn{\epsilon_t}{epsilon(t)} are iid
-\mjeqn{N(0, I_m)}{N(0, I(m))} and iid \mjeqn{N(0, I_d)}{N(0, I(d))},
+where \mjeqn{\eta_t}{eta(t)} and \mjeqn{\epsilon_t}{epsilon(t)} are i.i.d.
+\mjeqn{N(0, I_m)}{N(0, I(m))} and i.i.d. \mjeqn{N(0, I_d)}{N(0, I(d))},
 respectively, and \mjeqn{\alpha_t}{alpha(t)} denotes the state
 vector. The parameters admit the following dimensions:
 
@@ -104,14 +105,14 @@ Note that \code{fkf.SP} takes as input \code{HHt} and \code{GGt} which correspon
 
 \bold{Sequential Processing Iteration}:
 
-Traditional Kalman Filtering takes the entire observational vector \mjeqn{y_t}{y\link{t}} as the items for analysis. Sequential Processing
-is an alternate approach that filters the elements of \mjeqn{y_t}{y\link{t}} one at a time. Let \mjeqn{p}{p} equal the number of observations
-at time \mjeqn{t}{t} (ie. when considering possible missing observations \mjeqn{p \leq {d}}{p <= d}) . This univariate treatment of the multivariate series
-has the advantage that the function of the covariance matrix, \mjeqn{F_t}{F\link{t}}, becomes \mjeqn{1 \times 1}{1 * 1}, avoiding the inversion of
-a \mjeqn{p \times p}{p * p} matrix. This can provide computational efficiencies (especially under the case of many observations, ie. \mjeqn{p}{p} is large)
+Traditional Kalman filtering takes the entire observational vector \mjeqn{y_t}{y\link{t}} as the items for analysis. SP
+is an alternate approach that filters the elements of \mjeqn{y_t}{y\link{t}} one at a time. Sequential processing is described in the textbook of Durbin and Koopman (2001) and is described below.
 
+Let \mjeqn{p}{p} equal the number of observations at time \mjeqn{t}{t} (i.e. when considering possible missing observations \mjeqn{p \leq {d}}{p <= d}).
 The SP iteration involves treating the vector series: \mjeqn{y_1,\cdots,y_n}{y_1,...,y_n} instead as the scalar series
-\mjeqn{y_{1,1},\cdots,y_{(1,p)},y_{2,1},\cdots,y_{(n,p_n)}}{y_{1,1},...,y_{(1,p)},y_{2,1},...,y_{(n,p_n )}}
+\mjeqn{y_{1,1},\cdots,y_{(1,p)},y_{2,1},\cdots,y_{(n,p_n)}}{y_{1,1},...,y_{(1,p)},y_{2,1},...,y_{(n,p_n )}}. This univariate treatment of the multivariate series
+has the advantage that the function of the covariance matrix, \mjeqn{F_t}{F\link{t}}, becomes \mjeqn{1 \times 1}{1 * 1}, avoiding the calculation of both the inverse and determinant of
+a \mjeqn{p \times p}{p * p} matrix. This can increase computational efficiency (especially under the case of many observations, i.e. \mjeqn{p}{p} is large)
 
 For any time point, the observation vector is given by:
 
@@ -141,35 +142,27 @@ The log-likelihood at time \mjeqn{t}{t} is given by:
 Where the log-likelihood of observations is:
 
 \mjdeqn{log L = \sum_t^n{log L_t}}{log L = \sum_t^n(log L\link{t})}
-
-There's several distinctions between the Multivariate Kalman Filter and the Sequential processing filtered values.
-The elements of the innovation vector \mjeqn{v_t}{v\link{t}} are not the same as \mjeqn{v_{t,i}}{v\link{t,i}} for \mjeqn{i=1,\cdots,p}{i=1,...,p}.
-This is also true of the diagonal elements of the variance matrix \mjeqn{F_t}{F\link{t}} and the variances \mjeqn{F_{t,i}}{F\link{t,i}}, for \mjeqn{i=1,\cdots,p}{i=1,...,p};
-only the first diagonal element of \mjeqn{F_t}{F\link{t}} is equal to \mjeqn{F_{t,1}}{F\link{t,1}}.
 }
 \examples{
 
-# FKF.SP is suitable for parameter estimation, and thus the following examples
+# 'fkf.SP' is suitable for maximum likelihood estimation, the following examples
 # showcase how to estimate parameters of different models.
 
 ## <-------------------------------------------------------------------------------
 ##Example 1 - ARMA(2,1) model estimation.
 ## <-------------------------------------------------------------------------------
 
+#Length of series
 n <- 1000
 
-## Set the AR parameters
-
-ar1 <- 0.6
-ar2 <- 0.2
-ma1 <- -0.2
-sigma <- sqrt(0.2)
+#AR parameters
+AR <- c(ar1 = 0.6, ar2 = 0.2, ma1 = -0.2, sigma = sqrt(0.2))
 
 ## Sample from an ARMA(2, 1) process
 a <- stats::arima.sim(model = list(ar = c(ar1, ar2), ma = ma1), n = n,
             innov = rnorm(n) * sigma)
 
-## Create a state space representation out of the four ARMA parameters
+##State space representation of the four ARMA parameters
 arma21ss <- function(ar1, ar2, ma1, sigma) {
 Tt <- matrix(c(ar1, ar2, 1, 0), ncol = 2)
 Zt <- matrix(c(1, 0), ncol = 2)
@@ -192,7 +185,7 @@ sp <- arma21ss(theta["ar1"], theta["ar2"], theta["ma1"], theta["sigma"])
  return(-ans)
 }
 
-#Estimate Parameters using the optim function:
+## Parameter estimation - maximum likelihood estimation:
 theta <- c(ar = c(0, 0), ma1 = 0, sigma = 1)
 ARMA_MLE <- optim(theta, objective, yt = rbind(a), hessian = TRUE, SP = T)
 
@@ -200,13 +193,8 @@ ARMA_MLE <- optim(theta, objective, yt = rbind(a), hessian = TRUE, SP = T)
 ## <-------------------------------------------------------------------------------
 #Example 2 - Nile Example:
 ## <-------------------------------------------------------------------------------
-#Local level model for the Nile's annual flow:
 
-## Transition equation:
-## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)
-## Measurement equation:
-## y[t] = alpha[t] + eps[t], eps[t] ~  N(0, GGt)
-
+#Nile's annual flow:
 yt <- Nile
 
 ##Incomplete Nile Data - two NA's are present:
@@ -221,21 +209,16 @@ P0 <- matrix(100)       # Variance of 'a0'
 ## Parameter estimation - maximum likelihood estimation:
 ##Unknown parameters initial estimates:
 GGt <- HHt <- var(yt, na.rm = TRUE) * .5
-set.seed(1)
-#Perform Maximum Likelihood Estimation
-Nile_MLE <- suppressWarnings(optim(c(HHt = HHt, GGt = GGt),
-                                  fn = function(par, ...)
-                                    -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...),
-                                  yt = rbind(yt), a0 = a0, P0 = P0, dt = dt, ct = ct,
-                                  Zt = Zt, Tt = Tt))
+#Perform maximum likelihood estimation
+Nile_MLE <- optim(c(HHt = HHt, GGt = GGt),
+                fn = function(par, ...)
+                -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...),
+                yt = rbind(yt), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                Zt = Zt, Tt = Tt)
 ## <-------------------------------------------------------------------------------
 #Example 3 - Dimensionless Treering Example:
 ## <-------------------------------------------------------------------------------
 
-## Transition equation:
-## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)
-## Measurement equation:
-## y[t] = alpha[t] + eps[t], eps[t] ~  N(0, GGt)
 
 ## tree-ring widths in dimensionless units
 y <- treering
@@ -246,16 +229,16 @@ Zt <- Tt <- matrix(1)
 a0 <- y[1]            # Estimation of the first width
 P0 <- matrix(100)     # Variance of 'a0'
 
-##Time comparison - Estimate parameters 10 times:
-Treering_MLE <- suppressWarnings(optim(c(HHt = var(y, na.rm = TRUE) * .5,
-                       GGt = var(y, na.rm = TRUE) * .5),
-                     fn = function(par, ...)
-                       -fkf.SP(HHt = array(par[1],c(1,1,1)), GGt = matrix(par[2]), ...),
-                     yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
-                     Zt = Zt, Tt = Tt))
+## Parameter estimation - maximum likelihood estimation:
+Treering_MLE <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
+                 GGt = var(y, na.rm = TRUE) * .5),
+                 fn = function(par, ...)
+                -fkf.SP(HHt = array(par[1],c(1,1,1)), GGt = matrix(par[2]), ...),
+                 yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                 Zt = Zt, Tt = Tt)
 
-##Not run - Filter tree ring data with estimated parameters using the FKF package:
-#fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(fit.fkf$par[1],c(1,1,1)),
+##Not run - Obtain filtered values using the 'FKF' package:
+#fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(Treering_MLE$par[1],c(1,1,1)),
 #               GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
 }
 \references{
@@ -265,7 +248,7 @@ Fahrmeir, L. and tutz, G. (1994) \emph{Multivariate Statistical Modelling Based 
 
 Koopman, S. J., Shephard, N., Doornik, J. A. (1999). Statistical algorithms for models in state space using SsfPack 2.2. \emph{Econometrics Journal}, Royal Economic Society, vol. 2(1), pages 107-160.
 
-Durbin, James, and Siem Jan Koopman (2012). \emph{Time series analysis by state space methods.} Oxford university press.
+Durbin, James, and Siem Jan Koopman (2001). \emph{Time series analysis by state space methods.} Oxford university press.
 
 David Luethi, Philipp Erb and Simon Otziger (2018). FKF: Fast Kalman Filter. R package version 0.1.5.
 https://CRAN.R-project.org/package=FKF
