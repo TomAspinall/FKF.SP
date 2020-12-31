@@ -309,17 +309,17 @@ The Kalman filter can be used to estimate models that forecast the prices of a c
 Step 1 - load in the 'TSCPM' package
 
 ```{r}
-library(TSE)
+library(TSCPM)
 ```
 
 Step 2 - develop the objective function:
 
 ```{r}
 
-yt = t(log(TSE::SS.Oil$Contracts)) # quoted log futures prices
-delta.t <- TSE::SS.Oil$dt # Discrete time step
+yt = t(log(TSCPM::SS.Oil$Contracts)) # quoted log futures prices
+delta.t <- TSCPM::SS.Oil$dt # Discrete time step
 ##time to maturity of quoted futures contracts:
-TTM <- t(TSE::SS.Oil$Contract.Maturities)
+TTM <- t(TSCPM::SS.Oil$Contract.Maturities)
 
 a0 <- yt[1,1]     # initial estimate
 P0 <- matrix(100) # Variance of 'a0'

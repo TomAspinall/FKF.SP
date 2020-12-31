@@ -162,8 +162,8 @@
 #'AR <- c(ar1 = 0.6, ar2 = 0.2, ma1 = -0.2, sigma = sqrt(0.2))
 #'
 #'## Sample from an ARMA(2, 1) process
-#'a <- stats::arima.sim(model = list(ar = c(ar1, ar2), ma = ma1), n = n,
-#'             innov = rnorm(n) * sigma)
+#'a <- stats::arima.sim(model = list(ar = AR[c("ar1", "ar2")], ma = AR["ma1"]), n = n,
+#'innov = rnorm(n) * AR["sigma"])
 #'
 #'##State space representation of the four ARMA parameters
 #'arma21ss <- function(ar1, ar2, ma1, sigma) {
@@ -181,7 +181,7 @@
 #'             }
 #'
 #'## The objective function passed to 'optim'
-#'objective <- function(theta, yt, SP = F) {
+#'objective <- function(theta, yt) {
 #'sp <- arma21ss(theta["ar1"], theta["ar2"], theta["ma1"], theta["sigma"])
 #'  ans <- fkf.SP(a0 = sp$a0, P0 = sp$P0, dt = sp$dt, ct = sp$ct, Tt = sp$Tt,
 #'                Zt = sp$Zt, HHt = sp$HHt, GGt = sp$GGt, yt = yt)
@@ -190,7 +190,7 @@
 #'
 #'## Parameter estimation - maximum likelihood estimation:
 #'theta <- c(ar = c(0, 0), ma1 = 0, sigma = 1)
-#'ARMA_MLE <- optim(theta, objective, yt = rbind(a), hessian = TRUE, SP = T)
+#'ARMA_MLE <- optim(theta, objective, yt = rbind(a), hessian = TRUE)
 #'
 #'
 #'## <-------------------------------------------------------------------------------
