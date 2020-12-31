@@ -4,7 +4,7 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The R package FKF.SP provides a fast and flexible Kalman Filtering implementation utilizing Sequential Processing, designed for efficient parameter estimation through maximum likelihood estimation. Sequential Processing is a univariate treatment of a multivariate series of observations and can benefit from computational efficiencies over traditional Kalman Filtering. Sequential Processing takes the additional assumption that the white noise of observations are independent at each discrete time point. FKF.SP was built upon the existing FKF package and was designed to generally increase the computational efficiency of Kalman Filtering.
+Fast and flexible Kalman filtering implementation utilizing sequential processing, designed for efficient parameter estimation through maximum likelihood estimation. Sequential processing is a univariate treatment of a multivariate series of observations and can benefit from computational efficiency over traditional Kalman filtering when independence is assumed in the variance of the disturbances of the measurement equation. Sequential processing is described in the textbook of Durbin and Koopman (2001, ISBN:978-0-19-964117-8). 'FKF.SP' was built upon the existing 'FKF' package and is, in general, a faster Kalman filter.
 
 ## Installation
 
