@@ -2,7 +2,7 @@
 
 - Minor fixes in error reporting of 'fkf.SP'.
 - Example 4 of the vignette added
-- Now suggests the 'TSCPM' package for example 4
+- Now suggests the 'NFCP' package for example 4
 - Minor documentation edits
 - 'fkf.SP' no longer returns a 'warning' when NA's are returned
 

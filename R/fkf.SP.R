@@ -240,9 +240,6 @@
 #'                  yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
 #'                  Zt = Zt, Tt = Tt)
 #'
-#'##Not run - Obtain filtered values using the 'FKF' package:
-#'#fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(Treering_MLE$par[1],c(1,1,1)),
-#'#               GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
 #'@export
 fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt){
   inputs <- c("a0", "P0", "dt", "ct", "Tt", "Zt", "HHt", "GGt", "yt")

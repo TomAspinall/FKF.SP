@@ -237,9 +237,6 @@ Treering_MLE <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
                  yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
                  Zt = Zt, Tt = Tt)
 
-##Not run - Obtain filtered values using the 'FKF' package:
-#fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(Treering_MLE$par[1],c(1,1,1)),
-#               GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
 }
 \references{
 Anderson, B. D. O. and Moore. J. B. (1979). \emph{Optimal Filtering} Englewood Cliffs: Prentice-Hall.
