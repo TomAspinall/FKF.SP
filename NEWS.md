@@ -1,3 +1,8 @@
+# FKF.SP 0.1.2
+
+- Minor name changes to the vignette
+- Deprecated data from the 'NFCP' package used in vignette has been updated
+
 # FKF.SP 0.1.1
 
 - Minor fixes in error reporting of 'fkf.SP'.

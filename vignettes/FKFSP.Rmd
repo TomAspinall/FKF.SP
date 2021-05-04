@@ -275,31 +275,31 @@ P0 <- matrix(100)     # Variance of 'a0'
 ###MLE through the 'fkf' function:
 start = Sys.time()
 set.seed(1)
-for(i in 1:10)  fit.fkf <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
+for(i in 1:10)  fit_fkf <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
                      GGt = var(y, na.rm = TRUE) * .5),
                    fn = function(par, ...)
                      -fkf(HHt = array(par[1],c(1,1,1)), GGt = array(par[2],c(1,1,1)), ...)$logLik,
                    yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
                    Zt = Zt, Tt = Tt)
 
-run.time_FKF = Sys.time() - start
+run_time_FKF = Sys.time() - start
 
 ###MLE through the 'fkf.SP' function:
 start = Sys.time()
 set.seed(1)
-for(i in 1:10)  fit.fkf.SP <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
+for(i in 1:10)  fit_fkf.SP <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
                         GGt = var(y, na.rm = TRUE) * .5),
                       fn = function(par, ...)
                         -fkf.SP(HHt = array(par[1],c(1,1,1)), GGt = matrix(par[2]), ...),
                       yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
                       Zt = Zt, Tt = Tt)
-run.time_FKF.SP = Sys.time() - start
+run_time_FKF.SP = Sys.time() - start
 
-print(c(fkf.SP = run.time_FKF.SP, fkf = run.time_FKF))
+print(c(fkf.SP = run_time_FKF.SP, fkf = run_time_FKF))
 
 ## Filter tree ring data with estimated parameters using 'fkf':
-fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(fit.fkf$par[1],c(1,1,1)),
-               GGt = array(fit.fkf$par[2],c(1,1,1)), yt = rbind(y))
+fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = array(fit_fkf$par[1],c(1,1,1)),
+               GGt = array(fit_fkf$par[2],c(1,1,1)), yt = rbind(y))
 
 ```
 
@@ -313,31 +313,32 @@ Step 1 - develop the objective function:
 
 ```{r}
 
-yt = t(log(NFCP::SS.Oil$Contracts)) # quoted log futures prices
-delta.t <- NFCP::SS.Oil$dt # Discrete time step
+yt = t(log(NFCP::SS_oil$contracts)) # quoted log futures prices
+delta_t <- NFCP::SS_oil$dt # Discrete time step
 ##time to maturity of quoted futures contracts:
-TTM <- t(NFCP::SS.Oil$Contract.Maturities)
+TTM <- t(NFCP::SS_oil$contract_maturities)
 
 a0 <- yt[1,1]     # initial estimate
 P0 <- matrix(100) # Variance of 'a0'
 
 ## GBM Function
-gbm.mle <- function(theta, SP){
+gbm_mle <- function(theta, SP){
 
-ct <- theta["alpha.rn"] * TTM
-dt <- (theta["alpha"] - 0.5 * theta["sigma"]^2) * delta.t
+ct <- theta["alpha_rn"] * TTM
+dt <- (theta["alpha"] - 0.5 * theta["sigma"]^2) * delta_t
 Zt <- matrix(1, nrow(yt))
-HHt <- matrix(theta["sigma"]^2 * delta.t)
+HHt <- matrix(theta["sigma"]^2 * delta_t)
 Tt <- matrix(1)
 
 ##'fkf.SP' requires a vector of the diagonal elements of the variances of the measurement error 
 if(SP){
-GGt = rep(theta["sigma.epsilon"]^2, nrow(yt))
+GGt = rep(theta["ME_1"]^2, nrow(yt))
 } else {
 ##'fkf' instead requires a matrix of the elements of the variances of the measurement error 
-GGt = diag(theta["sigma.epsilon"]^2, nrow(yt))
+GGt = diag(theta["ME_1"]^2, nrow(yt))
 }
 
+##'fkf.SP' returns only the log-likelihood numeric value, whilst 'fkf' returns a list of filtered values
 logLik = ifelse(SP,
                 - fkf.SP(a0 = a0, P0 = P0, dt = dt, ct = ct, Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt, yt = yt),
                 - fkf(a0 = a0, P0 = P0, dt = dt, ct = ct, Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt, yt = yt)$logLik
@@ -354,18 +355,18 @@ Step 3 - Perform MLE:
 #Please run the complete chunk for a fair comparison:
 
 #Initial estimates
-gbm.par <- c(alpha = 0, alpha.rn = 0.01, sigma = 0.1, sigma.epsilon = 0.05)
+gbm_par <- c(alpha = 0, alpha_rn = 0.01, sigma = 0.1, ME_1 = 0.05)
 
 ###MLE through the 'fkf.SP' function:
 set.seed(1)
 start = Sys.time()
-fkf.SP.gbm = optim(par = gbm.par, fn = gbm.mle, SP = T)
+fkf.SP.gbm = optim(par = gbm_par, fn = gbm_mle, SP = T)
 fkf.SP_runtime <- Sys.time() - start
 
 ###MLE through the 'fkf' function:
 set.seed(1)
 start = Sys.time()
-fkf.gbm = optim(par = gbm.par, fn = gbm.mle, SP = F)
+fkf.gbm = optim(par = gbm_par, fn = gbm_mle, SP = F)
 fkf_runtime <- Sys.time() - start
 
 ```
