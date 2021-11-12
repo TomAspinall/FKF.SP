@@ -1,3 +1,7 @@
+# FKF.SP 0.1.3
+
+- USE_FC_LEN_T now adopted, consistent with its upcoming obligatory usage
+
 # FKF.SP 0.1.2
 
 - Minor name changes to the vignette

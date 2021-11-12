@@ -1,9 +1,13 @@
+#define USE_FC_LEN_T
 #include <R.h>
 #include <Rdefines.h>
 #include <Rinternals.h>
 #include <Rmath.h>
 #include <R_ext/BLAS.h>
 #include <R_ext/Lapack.h>
+#ifndef FCONE
+# define FCONE
+#endif
 
 /* Macro to transform an index of a 2-dimensional array into an index of a vector */
 #define IDX(i,j,dim0) (i) + (j) * (dim0)
@@ -225,7 +229,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&intone, &m, &dblminusone,
 			Zt_tSP, &intone,
 			at, &m,
-			&dblone, &V, &intone);			  
+			&dblone, &V, &intone FCONE FCONE);			  
 		
 		#ifdef DEBUGME
 		if(SP == SP_int)
@@ -247,7 +251,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	    	&intone, &m, &dblone,
 	    	Pt, &m,
 	    	Zt_tSP, &intone,
-	    	&dblzero, tmpmxSP, &m);
+	    	&dblzero, tmpmxSP, &m FCONE FCONE);
 		
 		
 		#ifdef DEBUGME
@@ -276,7 +280,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	    	&intone, &m, &dblone,
 	    	Zt_tSP, &intone,
 	    	tmpmxSP, &m,
-	    	&dblone, &Ft, &intone);		
+	    	&dblone, &Ft, &intone FCONE FCONE);		
 
 		#ifdef DEBUGME
 	    if(SP == SP_int)
@@ -310,7 +314,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&m, &intone, &intone, 
 			&dblone, tmpmxSP, &m,
 			&tmpFt_inv, &intone,
-			&dblzero, Kt, &m);
+			&dblzero, Kt, &m FCONE FCONE);
 					  
 		#ifdef DEBUGME
 	    if(SP == SP_int)
@@ -338,7 +342,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&m, &intone, &intone, 
 			&dblone, Kt, &m,
 			&V, &intone,
-			&dblone, at, &m);
+			&dblone, at, &m FCONE FCONE);
 
 		#ifdef DEBUGME
 		if(SP == SP_int)
@@ -356,7 +360,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&m,  &m, &intone, 
 			&dblminusone,  tmpmxSP, &m,
 			Kt, &m,
-			&dblone, Pt, &m);
+			&dblone, Pt, &m FCONE FCONE);
       
 		#ifdef DEBUGME
 		if(SP == SP_int)
@@ -431,7 +435,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&intone, &m, &dblminusone,
 			Zt_tSP, &intone,
 			at, &m,
-			&dblone, &V, &intone);		
+			&dblone, &V, &intone FCONE FCONE);		
 		
 		#ifdef DEBUGME
 		Rprintf("\n Post mat-mult V = %f", V);
@@ -448,7 +452,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&intone, &m, &dblone,
 			Pt, &m,
 			Zt_tSP, &intone,
-			&dblzero, tmpmxSP, &m);
+			&dblzero, tmpmxSP, &m FCONE FCONE);
 		
 		#ifdef DEBUGME
 		print_array(tmpmxSP, m, 1, "tmpmxSP:");	  
@@ -466,7 +470,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		    &intone, &m, &dblone,
 		    Zt_tSP, &intone,
 	    	tmpmxSP, &m,
-	    	&dblone, &Ft, &intone);		
+	    	&dblone, &Ft, &intone FCONE FCONE);		
 
     	//Step 3 - Calculate the Kalman Gain:
     	//Compute Kt = Pt %*% t(Zt[SP,,i * incZt]) %*% (1/Ft)
@@ -490,7 +494,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&intone, &intone, &dblone,
 			tmpmxSP, &m,
 			&tmpFt_inv, &intone,
-			&dblzero, Kt, &m);
+			&dblzero, Kt, &m FCONE FCONE);
 	
 		  
 		//Step 4 - Correct State Vector mean and Covariance:
@@ -501,7 +505,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&intone, &intone, &dblone,
 			Kt, &m,
 			&V, &intone,
-			&dblone, at, &m);
+			&dblone, at, &m FCONE FCONE);
     	
 		//Correction to covariance based upon Kalman Gain:
 		//ptt = ptt - ptt %*% t(Z[SP,,i * incZt]) %*% t(Ktt)
@@ -510,7 +514,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&m, &intone, &dblminusone,
 			tmpmxSP, &m,
 			Kt, &m,
-			&dblone, Pt, &m);
+			&dblone, Pt, &m FCONE FCONE);
 		  	  	
 		//Step 5 - Update Log-Likelihood Score:
 		*loglik -= 0.5 * (log(Ft) + V * V * tmpFt_inv);
@@ -537,7 +541,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		&intone, &m, &dblone,
 		&Tt[m_x_m * t * incTt], &m,
 		at, &m,
-		&dblzero, tmpmxSP, &m);
+		&dblzero, tmpmxSP, &m FCONE FCONE);
       
 	/* at[,t + 1] = dt[,t] */
 	F77_NAME(dcopy)(&m, &dt[m * t * incdt], &intone, at, &intone);
@@ -557,7 +561,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		&m, &m, &dblone,
 		Pt, &m,
 		&Tt[m_x_m * t * incTt], &m,
-		&dblzero, tmpmxm, &m);
+		&dblzero, tmpmxm, &m FCONE FCONE);
 
 	/* Pt[,,i + 1] = HHt[,,i * incHHt] */      
 	F77_NAME(dcopy)(&m_x_m, &HHt[m_x_m * t * incHHt], &intone, Pt, &intone);
@@ -571,7 +575,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		&m, &m, &dblone,
 		&Tt[m_x_m * t * incTt], &m,
 		tmpmxm, &m,
-		&dblone, Pt, &m);      
+		&dblone, Pt, &m FCONE FCONE);      
 		      
 	#ifdef DEBUGME
 	print_array(Pt, m, m, "Ptp1:");      
