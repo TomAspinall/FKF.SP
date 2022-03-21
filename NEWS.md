@@ -1,3 +1,9 @@
+# FKF.SP 0.2.0
+
+The 'fkf.SP' function now includes the 'verbose' argument, allowing for filtered values to be returned as a list object.
+
+The default setting for the 'verbose' argument is FALSE, resulting in no changes to existing applications of this function.
+
 # FKF.SP 0.1.3
 
 - USE_FC_LEN_T now adopted, consistent with its upcoming obligatory usage

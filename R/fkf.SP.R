@@ -18,6 +18,7 @@
 #'@param GGt A \code{vector} giving the diagonal elements of the \code{matrix} for the variance of disturbances of the measurement equation. Covariance between disturbances
 #'is not supported under the sequential processing method.
 #'@param yt A \code{matrix} containing the observations. "NA"- values are allowed
+#'@param verbose A \code{logical}. When \code{verbose = TRUE}, A \code{list} object is output, which provides the filtered state variables and variances of the Kalman filter.
 #'
 #'@details
 #'
@@ -25,7 +26,7 @@
 #'\bold{Parameters}:
 #'
 #'The \code{fkf.SP} function builds upon the \code{fkf} function of the \code{FKF} package by adjusting the Kalman filtering algorithm to
-#'utilize SP. The \code{fkf.SP} and \code{fkf} functions feature highly similar
+#'utilize sequential processing. Sequential processing can result in significant decreases in processing time over the traditional Kalman filter algorithm. The \code{fkf.SP} and \code{fkf} functions feature highly similar
 #'arguments for compatibility purposes; only argument \code{GGt} has changed from an \code{array} type object to a \code{vector} or \code{matrix} type object.
 #'The \code{fkf.SP} function takes the additional assumption over the \code{fkf} function that the variance of the disturbances of the measurement
 #'equation are independent; a requirement of SP (see below).
@@ -48,7 +49,7 @@
 #'
 #'\bold{State Space Form}
 #'
-#'The following notation follows that of Koopman \emph{et al.} (1999) and the documentation of the \code{fkf} function. The Kalman filter is characterized by the transition and measurement equations:
+#'The following notation follows that of Koopman \emph{et al.} (1999). The Kalman filter is characterized by the transition and measurement equations:
 #'
 #'\mjdeqn{\alpha_{t + 1} = d_t + T_t \cdot \alpha_t + H_t \cdot \eta_t}{alpha(t + 1) = d(t) + T(t) alpha(t) + H(t) * eta(t)}
 #'\mjdeqn{y_t = c_t + Z_t \cdot \alpha_t + G_t \cdot \epsilon_t}{y(t) = c(t) + Z(t) alpha(t) + G(t) * epsilon(t)}
@@ -115,12 +116,14 @@
 #'@return
 #'A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
 #'
-#'\bold{fkf and fkf.SP values}:
+#'When \code{verbose = TRUE}, a list with the following elements is also returned, corresponding to the filtered state variables and covariances of the Kalman filter algorithm:
 #'
-#'Outputs of the \code{fkf} and \code{fkf.SP} functions differ slightly in that \code{fkf} returns a list object of filtered values returned by the
-#'algorithm, whereas \code{fkf.SP} returns only a \code{numeric} value corresponding to the log-likelihood returned by the filter. \code{fkf}
-#'is thus appropriate when filtered values are required and \code{fkf.SP} is appropriate for efficient parameter estimation through maximum likelihood
-#'estimation.
+#' \tabular{rl}{
+#'     \code{att} \tab A \eqn{m \times n}{m * n}-matrix containing the filtered state variables, i.e. \code{att[,t]} = \eqn{a_{t|t}}{a(t|t)}.\cr
+#'     \code{at} \tab A \eqn{m \times (n + 1)}{m * (n + 1)}-matrix containing the predicted state variables, i.e. \code{at[,t]} = \eqn{a_t}{a(t)}.\cr
+#'     \code{Ptt} \tab A \eqn{m \times m \times n}{m * m * n}-array containing the variance of att, i.e. \code{Ptt[,,t]} = \eqn{P_{t|t}}{P(t|t)}.\cr
+#'     \code{logLik} \tab The log-likelihood.
+#'}
 #'
 #'\bold{Log-Likelihood Values:}
 #'
@@ -148,11 +151,30 @@
 #'
 #'@examples
 #'
-#'# 'fkf.SP' is suitable for maximum likelihood estimation, the following examples
-#'# showcase how to estimate parameters of different models.
+#'## <-------------------------------------------------------------------------------
+#'##Example 1 - Filter a state space model - Nile data
+#'## <-------------------------------------------------------------------------------
+#'
+#'# Observations must be a matrix:
+#'yt <- rbind(datasets::Nile)
+#'
+#'## Set constant parameters:
+#'dt <- ct <- matrix(0)
+#'Zt <- Tt <- matrix(1)
+#'a0 <- yt[1]   # Estimation of the first year flow
+#'P0 <- matrix(100)       # Variance of 'a0'
+#'## These can be estimated through MLE:
+#'GGt <- matrix(15000)
+#'HHt <- matrix(1300)
+#'
+#'# 'verbose' returns the filtered values:
+#'output <- fkf.SP(a0 = a0, P0 = P0, dt = dt, ct = ct,
+#'                Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt,
+#'                yt = yt, verbose = TRUE)
+#'
 #'
 #'## <-------------------------------------------------------------------------------
-#'##Example 1 - ARMA(2,1) model estimation.
+#'##Example 2 - ARMA(2,1) model estimation.
 #'## <-------------------------------------------------------------------------------
 #'
 #'#Length of series
@@ -194,11 +216,11 @@
 #'
 #'
 #'## <-------------------------------------------------------------------------------
-#'#Example 2 - Nile Example:
+#'#Example 3 - Nile Model Estimation:
 #'## <-------------------------------------------------------------------------------
 #'
 #'#Nile's annual flow:
-#'yt <- Nile
+#'yt <- rbind(Nile)
 #'
 #'##Incomplete Nile Data - two NA's are present:
 #'yt[c(3, 10)] <- NA
@@ -211,15 +233,15 @@
 #'
 #'## Parameter estimation - maximum likelihood estimation:
 #'##Unknown parameters initial estimates:
-#'GGt <- HHt <- var(yt, na.rm = TRUE) * .5
+#'GGt <- HHt <- var(c(yt), na.rm = TRUE) * .5
 #'#Perform maximum likelihood estimation
 #'Nile_MLE <- optim(c(HHt = HHt, GGt = GGt),
 #'                 fn = function(par, ...)
 #'                 -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...),
-#'                 yt = rbind(yt), a0 = a0, P0 = P0, dt = dt, ct = ct,
+#'                 yt = yt, a0 = a0, P0 = P0, dt = dt, ct = ct,
 #'                 Zt = Zt, Tt = Tt)
 #'## <-------------------------------------------------------------------------------
-#'#Example 3 - Dimensionless Treering Example:
+#'#Example 4 - Dimensionless Treering Example:
 #'## <-------------------------------------------------------------------------------
 #'
 #'
@@ -241,7 +263,7 @@
 #'                  Zt = Zt, Tt = Tt)
 #'
 #'@export
-fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt){
+fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, verbose = FALSE){
   inputs <- c("a0", "P0", "dt", "ct", "Tt", "Zt", "HHt", "GGt", "yt")
 
   ##Missing arguments check:
@@ -249,6 +271,9 @@ fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt){
                      missing(Tt), missing(Zt), missing(HHt), missing(GGt),
                      missing(yt))
   if(any(missing.values)) stop(paste("Input Arguments", paste(inputs[missing.values], collapse = ", "), "missing."))
+  if(class(verbose) != "logical") stop("verbose must be of class 'logical'")
+
+  if(is.null(dim(yt))) stop("yt cannot be of class numeric!")
 
   ##Class type check:
   stored_inputs <- c(a0 = storage.mode(a0), P0 = storage.mode(P0),
@@ -283,28 +308,30 @@ fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt){
   m <- length(a0)
   invalid_m_dimensions <- c(dim(P0), dim(dt)[1], dim(Zt)[2], dim(HHt)[1:2], dim(Tt)[1:2]) != m
   m_dimension_variable <- c(rep("P0",2), "dt", "Zt", rep("HHt",2), rep("Tt",2))
-  if(any(invalid_m_dimensions)) stop(paste("Dimensions in", paste(m_dimension_variable[invalid_m_dimensions], collapse = ", "), "do not match length of state vector ('m')"))
+  if(any(invalid_m_dimensions)) stop(paste("Dimension(s) in", paste(m_dimension_variable[invalid_m_dimensions], collapse = ", "), "do not match length of state vector ('m')"))
 
   #n:
   n <- dim(yt)[2]
   n_dimension_check = c(dim(dt)[2], dim(ct)[2], dim(Tt)[3], dim(Zt)[3], dim(HHt)[3], dim(GGt)[2])
   n_dimensions = c("dt", "ct", "Tt", "Zt", "HHt", "GGt")
   invalid_n_dimensions = (n_dimension_check != n) & (n_dimension_check != 1)
-  if(any(invalid_n_dimensions)) stop(paste("Dimensions in", paste(n_dimensions[invalid_n_dimensions], collapse = ", "), "do not equal either 1 or ncol(yt) ('n')"))
+  if(any(invalid_n_dimensions)) stop(paste("Dimension(s) in", paste(n_dimensions[invalid_n_dimensions], collapse = ", "), "do not equal either 1 or ncol(yt) ('n')"))
 
   #d:
   d <- nrow(yt)
   invalid_d_dimensions = c(dim(ct)[1], dim(Zt)[1], dim(GGt)[1]) != d
   d_dimensions = c("ct", "Zt", "GGt")
-  if(any(invalid_d_dimensions)) stop(paste("Dimensions in", paste(d_dimensions[invalid_d_dimensions], collapse = ", "), "do not equal nrow(yt) ('d')"))
-
+  if(any(invalid_d_dimensions)) stop(paste("Dimension(s) in", paste(d_dimensions[invalid_d_dimensions], collapse = ", "), "do not equal nrow(yt) ('d')"))
 
   ###Call Kalman filter function:
-  ans <- .Call("fkf_SP", a0, P0, dt, ct, Tt, Zt, HHt, GGt,
-               yt, PACKAGE = "FKF.SP")
+  if(verbose){
+    ans <- .Call("fkf_SP_verbose", a0, P0, dt, ct, Tt, Zt, HHt, GGt,
+                 yt, PACKAGE = "FKF.SP")
+  }  else {
+    ans <- .Call("fkf_SP", a0, P0, dt, ct, Tt, Zt, HHt, GGt,
+                 yt, PACKAGE = "FKF.SP")
+  }
 
-  ###Deprecated:
-  #if(is.na(ans))  warning("Log-Likelihood returned NA")
   return(ans)
 }
 

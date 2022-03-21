@@ -4,7 +4,7 @@
 \alias{fkf.SP}
 \title{Fast Kalman Filtering using Sequential Processing.}
 \usage{
-fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt)
+fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, verbose = FALSE)
 }
 \arguments{
 \item{a0}{A \code{vector} giving the initial value/estimation of the state variable}
@@ -25,16 +25,20 @@ fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt)
 is not supported under the sequential processing method.}
 
 \item{yt}{A \code{matrix} containing the observations. "NA"- values are allowed}
+
+\item{verbose}{A \code{logical}. When \code{verbose = TRUE}, A \code{list} object is output, which provides the filtered state variables and variances of the Kalman filter.}
 }
 \value{
 A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
 
-\bold{fkf and fkf.SP values}:
+When \code{verbose = TRUE}, a list with the following elements is also returned, corresponding to the filtered state variables and covariances of the Kalman filter algorithm:
 
-Outputs of the \code{fkf} and \code{fkf.SP} functions differ slightly in that \code{fkf} returns a list object of filtered values returned by the
-algorithm, whereas \code{fkf.SP} returns only a \code{numeric} value corresponding to the log-likelihood returned by the filter. \code{fkf}
-is thus appropriate when filtered values are required and \code{fkf.SP} is appropriate for efficient parameter estimation through maximum likelihood
-estimation.
+\tabular{rl}{
+\code{att} \tab A \eqn{m \times n}{m * n}-matrix containing the filtered state variables, i.e. \code{att[,t]} = \eqn{a_{t|t}}{a(t|t)}.\cr
+\code{at} \tab A \eqn{m \times (n + 1)}{m * (n + 1)}-matrix containing the predicted state variables, i.e. \code{at[,t]} = \eqn{a_t}{a(t)}.\cr
+\code{Ptt} \tab A \eqn{m \times m \times n}{m * m * n}-array containing the variance of att, i.e. \code{Ptt[,,t]} = \eqn{P_{t|t}}{P(t|t)}.\cr
+\code{logLik} \tab The log-likelihood.
+}
 
 \bold{Log-Likelihood Values:}
 
@@ -59,7 +63,7 @@ the additional assumption that the variance of disturbances in the measurement e
 \bold{Parameters}:
 
 The \code{fkf.SP} function builds upon the \code{fkf} function of the \code{FKF} package by adjusting the Kalman filtering algorithm to
-utilize SP. The \code{fkf.SP} and \code{fkf} functions feature highly similar
+utilize sequential processing. Sequential processing can result in significant decreases in processing time over the traditional Kalman filter algorithm. The \code{fkf.SP} and \code{fkf} functions feature highly similar
 arguments for compatibility purposes; only argument \code{GGt} has changed from an \code{array} type object to a \code{vector} or \code{matrix} type object.
 The \code{fkf.SP} function takes the additional assumption over the \code{fkf} function that the variance of the disturbances of the measurement
 equation are independent; a requirement of SP (see below).
@@ -82,7 +86,7 @@ classes and dimensions:
 
 \bold{State Space Form}
 
-The following notation follows that of Koopman \emph{et al.} (1999) and the documentation of the \code{fkf} function. The Kalman filter is characterized by the transition and measurement equations:
+The following notation follows that of Koopman \emph{et al.} (1999). The Kalman filter is characterized by the transition and measurement equations:
 
 \mjdeqn{\alpha_{t + 1} = d_t + T_t \cdot \alpha_t + H_t \cdot \eta_t}{alpha(t + 1) = d(t) + T(t) alpha(t) + H(t) * eta(t)}
 \mjdeqn{y_t = c_t + Z_t \cdot \alpha_t + G_t \cdot \epsilon_t}{y(t) = c(t) + Z(t) alpha(t) + G(t) * epsilon(t)}
@@ -145,11 +149,30 @@ Where the log-likelihood of observations is:
 }
 \examples{
 
-# 'fkf.SP' is suitable for maximum likelihood estimation, the following examples
-# showcase how to estimate parameters of different models.
+## <-------------------------------------------------------------------------------
+##Example 1 - Filter a state space model - Nile data
+## <-------------------------------------------------------------------------------
+
+# Observations must be a matrix:
+yt <- rbind(datasets::Nile)
+
+## Set constant parameters:
+dt <- ct <- matrix(0)
+Zt <- Tt <- matrix(1)
+a0 <- yt[1]   # Estimation of the first year flow
+P0 <- matrix(100)       # Variance of 'a0'
+## These can be estimated through MLE:
+GGt <- matrix(15000)
+HHt <- matrix(1300)
+
+# 'verbose' returns the filtered values:
+output <- fkf.SP(a0 = a0, P0 = P0, dt = dt, ct = ct,
+               Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt,
+               yt = yt, verbose = TRUE)
+
 
 ## <-------------------------------------------------------------------------------
-##Example 1 - ARMA(2,1) model estimation.
+##Example 2 - ARMA(2,1) model estimation.
 ## <-------------------------------------------------------------------------------
 
 #Length of series
@@ -191,11 +214,11 @@ ARMA_MLE <- optim(theta, objective, yt = rbind(a), hessian = TRUE)
 
 
 ## <-------------------------------------------------------------------------------
-#Example 2 - Nile Example:
+#Example 3 - Nile Model Estimation:
 ## <-------------------------------------------------------------------------------
 
 #Nile's annual flow:
-yt <- Nile
+yt <- rbind(Nile)
 
 ##Incomplete Nile Data - two NA's are present:
 yt[c(3, 10)] <- NA
@@ -208,15 +231,15 @@ P0 <- matrix(100)       # Variance of 'a0'
 
 ## Parameter estimation - maximum likelihood estimation:
 ##Unknown parameters initial estimates:
-GGt <- HHt <- var(yt, na.rm = TRUE) * .5
+GGt <- HHt <- var(c(yt), na.rm = TRUE) * .5
 #Perform maximum likelihood estimation
 Nile_MLE <- optim(c(HHt = HHt, GGt = GGt),
                 fn = function(par, ...)
                 -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...),
-                yt = rbind(yt), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                yt = yt, a0 = a0, P0 = P0, dt = dt, ct = ct,
                 Zt = Zt, Tt = Tt)
 ## <-------------------------------------------------------------------------------
-#Example 3 - Dimensionless Treering Example:
+#Example 4 - Dimensionless Treering Example:
 ## <-------------------------------------------------------------------------------
 
 
