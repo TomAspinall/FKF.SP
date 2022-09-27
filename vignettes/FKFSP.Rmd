@@ -81,7 +81,7 @@ param <- arma21ss(theta["ar1"], theta["ar2"], theta["ma1"], theta["sigma"])
 if(SP){
  ans <- - fkf.SP(a0 = param$a0, P0 = param$P0, dt = param$dt, ct = param$ct, 
                Tt = param$Tt, Zt = param$Zt, HHt = param$HHt, GGt = param$GGt, 
-               yt = yt)
+               yt = yt, verbose = TRUE)$logLik
  }
 # Kalman filtering through the 'fkf' function:
  else{
@@ -192,9 +192,9 @@ set.seed(1)
 if(SP){
   return(optim(c(HHt = HHt, GGt = GGt),
         fn = function(par, ...)
-             -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...),
+             -fkf.SP(HHt = matrix(par[1]), GGt = matrix(par[2]), ...)$logLik,
              yt = rbind(yt), a0 = a0, P0 = P0, dt = dt, ct = ct,
-             Zt = Zt, Tt = Tt))
+             Zt = Zt, Tt = Tt, verbose = TRUE))
 } else {
 # Kalman filtering through the 'fkf' function:
   return(optim(c(HHt = HHt, GGt = GGt),
@@ -269,7 +269,7 @@ FKF_runtime <- Sys.time() - start
 set.seed(1)
 start = Sys.time()
 for(i in 1:1e4) fkf.SP(a0, P0, dt, ct, Tt, Zt, HHt = matrix(fkf.SP_MLE_complete$par[1]),
-                       GGt = matrix(fkf.SP_MLE_complete$par[2]), yt = rbind(y_complete))
+                       GGt = matrix(fkf.SP_MLE_complete$par[2]), yt = rbind(y_complete), verbose = TRUE)
 fkf.SP_runtime <- Sys.time() - start
 
 print(c(FKF.SP = fkf.SP_runtime, FKF = FKF_runtime))
@@ -318,7 +318,7 @@ set.seed(1)
 for(i in 1:10)  fit_fkf.SP <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
                         GGt = var(y, na.rm = TRUE) * .5),
                       fn = function(par, ...)
-                        -fkf.SP(HHt = array(par[1],c(1,1,1)), GGt = matrix(par[2]), ...),
+                        -fkf.SP(HHt = array(par[1],c(1,1,1)), GGt = matrix(par[2]),verbose = TRUE, ...)$logLik,
                       yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
                       Zt = Zt, Tt = Tt)
 run_time_FKF.SP = Sys.time() - start
@@ -345,7 +345,7 @@ print(head(cbind(FKF = fkf.obj$Ptt[1,,], FKF.SP = fkf.SP.obj$Ptt[1,,])))
 
 ## Example 4 - Fitting a Geometric Brownian Motion (GBM) to Term Structure Data:
 
-The Kalman filter can be used to fit stochastic models to time-series data of quoted prices of futures contracts of commodities. The following example estimates the parameters of a random walk (i.e. Geometric Brownian Motion) model for crude oil through MLE. Quoted futures contracts are available in the 'NFCP' package. See the 'NFCP' documentation for more details on fitting commodity pricing models to term structure data.
+The Kalman filter can be used to fit stochastic models to time-series data of quoted prices of futures contracts of commodities. The following example estimates the parameters of a random walk (i.e. geometric Brownian motion) model for crude oil through MLE. Quoted futures contracts are available in the 'NFCP' package. See the 'NFCP' documentation for more details on fitting commodity pricing models to term structure data.
 
 Step 1 - develop the objective function:
 
@@ -376,9 +376,9 @@ GGt = rep(theta["ME_1"]^2, nrow(yt))
 GGt = diag(theta["ME_1"]^2, nrow(yt))
 }
 
-##'fkf.SP' returns only the log-likelihood numeric value, whilst 'fkf' returns a list of filtered values
+##'fkf.SP' returns only the log-likelihood numeric value when Verbose = FALSE, whilst 'fkf' returns a list of filtered values
 logLik = ifelse(SP,
-                - fkf.SP(a0 = a0, P0 = P0, dt = dt, ct = ct, Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt, yt = yt),
+                - fkf.SP(a0 = a0, P0 = P0, dt = dt, ct = ct, Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt, yt = yt, verbose = TRUE)$logLik,
                 - fkf(a0 = a0, P0 = P0, dt = dt, ct = ct, Tt = Tt, Zt = Zt, HHt = HHt, GGt = GGt, yt = yt)$logLik
                 )
 return(logLik)
@@ -435,7 +435,7 @@ print(c(FKF.SP = fkf.SP_runtime, FKF = fkf_runtime))
 
 Sequential processing is a significantly faster Kalman filtering approach for this particular example due to the large number of observations at each time point, the assumption that the variance of the disturbances are independent, the large number of NA's that are observed as contracts expired or are made available and the dimensionality of argument 'GGt' being significantly reduced.
 
-Finally, the filtered values, which is this case correspond to the estimated log of the spot price, are identical through both functions:
+Finally, the filtered values, which in this case correspond to the estimated log of the spot price, are identical through both functions:
 
 ```{r}
 ct <- fkf.SP.gbm$par['alpha_rn'] * TTM
@@ -456,3 +456,4 @@ colnames(Filtered_values) <- c("FKF", "FKF.SP")
 print(head(Filtered_values))
 
 ```
+
