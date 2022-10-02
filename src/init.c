@@ -5,10 +5,12 @@
 
 /* .Call calls */
 extern SEXP fkf_SP_verbose(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP fks_SP(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP fkf_SP(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
  
 static const R_CallMethodDef CallEntries[] = {
     {"fkf_SP_verbose", (DL_FUNC) &fkf_SP_verbose, 9},
+    {"fks_SP", (DL_FUNC) &fks_SP, 8},
     {"fkf_SP", (DL_FUNC) &fkf_SP, 9},
     {NULL, NULL, 0}
 };

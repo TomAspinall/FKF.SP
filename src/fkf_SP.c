@@ -13,7 +13,7 @@
 #define IDX(i,j,dim0) (i) + (j) * (dim0)
 
 /*#define DEBUG_PRINT*/
-//#define DEBUGME
+// #define DEBUGME
 
 /* Print arrays */
 void print_array(double * data, int i, int j, const char * lab)
@@ -243,7 +243,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	    {
 	      	if(t == i_int){
 	    print_array(Zt_tSP, 1, m, "Zt[SP,]");
-	    Rprintf("\n V - Pre Mat Mult: %f", V);      		
+	    // Rprintf("\n V - Pre Mat Mult: %f", V);      		
 			}
 		}
 	    #endif
@@ -260,14 +260,14 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			at, &m,
 			&dblone, &vt_output[SP + d * t], &intone FCONE FCONE);			  
 		
-		#ifdef DEBUGME
-		if(SP == SP_int)
-		{
-			if(t == i_int){
-			Rprintf("\n V - Post Mat Mult: %f", V);
-			}
-		}
-	    #endif
+		// #ifdef DEBUGME
+		// if(SP == SP_int)
+		// {
+		// 	if(t == i_int){
+		// 	Rprintf("\n V - Post Mat Mult: %f", V);
+		// 	}
+		// }
+	    // #endif
 				
 		//Step 2 - Function of Covariance Matrix:
 		//Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
@@ -332,7 +332,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	    if(SP == SP_int)
 	    {
 	      	if(t == i_int){
-			Rprintf("\n Inverse Ft: %f \n", tmpFtinv);
+			Rprintf("\n Inverse Ft: %f \n", Ftinv_output[SP + d * t]);
 			}
 		}
 	    #endif	   
@@ -350,7 +350,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&m, &intone, &intone, 
 			&dblone, tmpmxSP, &m,
 			&Ftinv_output[SP + d * t], &intone,
-			&dblzero, &Kt_output[m * t], &m FCONE FCONE);
+			&dblzero, &Kt_output[m * t + (m * SP)], &m FCONE FCONE);
 
 
 
@@ -359,19 +359,19 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	    if(SP == SP_int)
 	    {
 	    	if(t == i_int){
-	    	print_array(Kt, m, 1, "Kalman Gain");
+	    	print_array(&Kt_output[m * t + (m * SP)], m, 1, "Kalman Gain");
 			}
 		}
 	    #endif	   
 
-		#ifdef DEBUGME
-	    if(SP == SP_int)
-	    {
-	      	if(t == i_int){
-	    	Rprintf("\n V - Post Mat Mult: %f", V);
-			}
-		}
-	    #endif
+		// #ifdef DEBUGME
+	    // if(SP == SP_int)
+	    // {
+	    //   	if(t == i_int){
+	    // 	Rprintf("\n V - Post Mat Mult: %f", V);
+		// 	}
+		// }
+	    // #endif
   
 		//Step 4 - Correct State Vector mean and Covariance:
 
@@ -384,7 +384,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		// 	&dblone, at, &m FCONE FCONE);
 		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
 			&m, &intone, &intone, 
-			&dblone, &Kt_output[m*t], &m,
+			&dblone, &Kt_output[m * t + (m * SP)], &m,
 			&vt_output[SP + d * t], &intone,
 			&dblone, at, &m FCONE FCONE);
 
@@ -403,7 +403,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		F77_NAME(dgemm)(dont_transpose, transpose, 
 			&m,  &m, &intone, 
 			&dblminusone,  tmpmxSP, &m,
-			&Kt_output[m*t], &m,
+			&Kt_output[m * t + (m * SP)], &m,
 			&dblone, Pt, &m FCONE FCONE);
       
 		#ifdef DEBUGME
@@ -471,9 +471,9 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		// V = yt_temp[SP] - ct_temp[SP];
 		vt_output[SP + d * t] = yt_temp[SP] - ct_temp[SP];
 
-		#ifdef DEBUGME
-		Rprintf("\n Pre mat-mult V = %f", V);
-		#endif
+		// #ifdef DEBUGME
+		// Rprintf("\n Pre mat-mult V = %f", V);
+		// #endif
 
     	//vt[SP,t] = vt[SP,t] - Zt[SP,, t * incZt] %*% at[,t]
 		// F77_NAME(dgemm)(dont_transpose, dont_transpose, &intone,
@@ -487,9 +487,9 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			at, &m,
 			&dblone, &vt_output[SP + d * t], &intone FCONE FCONE);		
 
-		#ifdef DEBUGME
-		Rprintf("\n Post mat-mult V = %f", V);
-		#endif
+		// #ifdef DEBUGME
+		// Rprintf("\n Post mat-mult V = %f", V);
+		// #endif
 		
 		//Step 2 - Function of Covariance Matrix:
 		//Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
@@ -535,7 +535,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 
 
 		#ifdef DEBUGME
-		Rprintf("\n Inverse Ft: %f \n", tmpFtinv);
+		Rprintf("\n Inverse Ft: %f \n", Ftinv_output[SP + d * t]);
 		#endif
 		
     	//Kt is an m x 1 matrix
@@ -551,7 +551,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&m, &intone, &intone, 
 			&dblone, tmpmxSP, &m,
 			&Ftinv_output[SP + d * t], &intone,
-			&dblzero, &Kt_output[m * t], &m FCONE FCONE);
+			&dblzero, &Kt_output[m * t + (m * SP)], &m FCONE FCONE);
 	
 		  
 		//Step 4 - Correct State Vector mean and Covariance:
@@ -565,7 +565,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		// 	&dblone, at, &m FCONE FCONE);
 		F77_NAME(dgemm)(dont_transpose, dont_transpose, &m,
 			&intone, &intone, &dblone,
-			&Kt_output[m*t], &m,
+			&Kt_output[m * t + (m * SP)], &m,
 			&vt_output[SP + d * t], &intone,
 			&dblone, at, &m FCONE FCONE);
     	
@@ -575,7 +575,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		F77_NAME(dgemm)(dont_transpose, transpose, &m,
 			&m, &intone, &dblminusone,
 			tmpmxSP, &m,
-			&Kt_output[m*t], &m,
+			&Kt_output[m * t + (m * SP)], &m,
 			&dblone, Pt, &m FCONE FCONE);
 		  	  	
 		//Step 5 - Update Log-Likelihood Score:
@@ -650,9 +650,9 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	#endif
 		             
 	#ifdef DEBUGME
-	print_array(&at, 1, m, "at:");
-	print_array(&Pt, m, m, "Pt:");
-	Rprintf("\n---------- iteration nr. %i ----------\n", i+1);
+	print_array(at, 1, m, "at:");
+	print_array(Pt, m, m, "Pt:");
+	Rprintf("\n---------- iteration nr. %i ----------\n", t+1);
 	#endif
 
 	//att
@@ -697,6 +697,161 @@ Rprintf("\n---------- Recursion Complete ----------\n");
 /*********************************************************************************/
 /* ---------- ------------------ End Kalman Filter ------------------ ---------- */
 /*********************************************************************************/
+
+/*********************************************************************************/
+/* ---------- --------------- Convert between R and C  -------------- ---------- */
+/*********************************************************************************/
+SEXP fkf_SP_verbose(SEXP a0, SEXP P0, SEXP dt, SEXP ct, SEXP Tt,
+	SEXP Zt, SEXP HHt, SEXP GGt, SEXP yt)
+{
+
+// Dimensions required for the called cfkf_SP_verbose function:
+	int m = length(a0);
+	int d = INTEGER(GET_DIM(yt))[0];
+	int n = INTEGER(GET_DIM(yt))[1];
+	
+  	int m_x_n = m * n;
+  	int m_x_m_x_n = m * m * n;
+	int m_x_d_x_n = m * d * n;
+	int d_x_n = d * n;
+  	double dbl_NA = NA_REAL;
+    int intzero = 0, intone = 1;
+// Symbolic expression - R data types. Essentially :
+	
+	SEXP loglik, at_output, att_output, pt_output, ptt_output, Ftinv_output,vt_output,Kt_output,ans, ans_names;
+	SEXP dim_at, dim_att, dim_Pt, dim_Ptt, dim_Kt,dim_Ftinv,class_name;
+	
+  /* Allocate memory for objects to be returned and set values to NA. */
+	PROTECT(loglik = NEW_NUMERIC(1));
+	PROTECT(att_output = NEW_NUMERIC(m * n));
+  	PROTECT(at_output = NEW_NUMERIC(m * (n + 1)));
+  	PROTECT(ptt_output = NEW_NUMERIC(m * m * n));
+  	PROTECT(pt_output = NEW_NUMERIC(m * m * (n + 1)));
+  	PROTECT(Ftinv_output = NEW_NUMERIC(d * n));
+  	PROTECT(vt_output = NEW_NUMERIC(d * n));
+  	PROTECT(Kt_output = NEW_NUMERIC(m * d * n));
+
+
+    //Set dimensions
+    F77_NAME(dcopy)(&m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(att_output), &intone);
+  	F77_NAME(dcopy)(&m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(at_output), &intone);
+  	F77_NAME(dcopy)(&m_x_d_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(Kt_output), &intone);
+  	F77_NAME(dcopy)(&m_x_m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(ptt_output), &intone);
+  	F77_NAME(dcopy)(&m_x_m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(pt_output), &intone);
+  	F77_NAME(dcopy)(&d_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(vt_output), &intone);
+  	F77_NAME(dcopy)(&d_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(Ftinv_output), &intone);
+
+
+	cfkf_SP_verbose(m, d, n,
+	// Input
+		NUMERIC_POINTER(a0), NUMERIC_POINTER(P0),
+		NUMERIC_POINTER(dt), INTEGER(GET_DIM(dt))[1] == n,
+		NUMERIC_POINTER(ct), INTEGER(GET_DIM(ct))[1] == n,
+		NUMERIC_POINTER(Tt), INTEGER(GET_DIM(Tt))[2] == n,
+		NUMERIC_POINTER(Zt), INTEGER(GET_DIM(Zt))[2] == n,
+		NUMERIC_POINTER(HHt), INTEGER(GET_DIM(HHt))[2] == n,
+		NUMERIC_POINTER(GGt), INTEGER(GET_DIM(GGt))[1] == n,
+	// Output
+		NUMERIC_POINTER(yt),
+		NUMERIC_POINTER(loglik),
+		NUMERIC_POINTER(at_output),
+		NUMERIC_POINTER(att_output),
+		NUMERIC_POINTER(pt_output),
+		NUMERIC_POINTER(ptt_output),
+		NUMERIC_POINTER(Ftinv_output),
+		NUMERIC_POINTER(vt_output),
+		NUMERIC_POINTER(Kt_output)		
+		);
+
+  /* Produce named return list */
+  PROTECT(ans = NEW_LIST(11));
+  PROTECT(ans_names = NEW_CHARACTER(11));
+  SET_STRING_ELT(ans_names, 0, mkChar("att"));
+  SET_STRING_ELT(ans_names, 1, mkChar("at"));
+  SET_STRING_ELT(ans_names, 2, mkChar("Ptt"));
+  SET_STRING_ELT(ans_names, 3, mkChar("Pt"));
+  SET_STRING_ELT(ans_names, 4, mkChar("yt"));
+  SET_STRING_ELT(ans_names, 5, mkChar("Tt"));
+  SET_STRING_ELT(ans_names, 6, mkChar("Zt"));
+  SET_STRING_ELT(ans_names, 7, mkChar("Ftinv"));
+  SET_STRING_ELT(ans_names, 8, mkChar("vt"));
+  SET_STRING_ELT(ans_names, 9, mkChar("Kt"));
+  SET_STRING_ELT(ans_names, 10, mkChar("logLik"));
+
+
+  setAttrib(ans, R_NamesSymbol, ans_names);
+  // Set matrix dimensions:
+  PROTECT(dim_at = NEW_INTEGER(2));
+  PROTECT(dim_att = NEW_INTEGER(2));
+
+  INTEGER(dim_at)[0] = m;
+  INTEGER(dim_at)[1] = n + 1;
+
+  INTEGER(dim_att)[0] = m;
+  INTEGER(dim_att)[1] = n;
+
+  setAttrib(at_output, R_DimSymbol, dim_at);
+  setAttrib(att_output, R_DimSymbol, dim_att);
+
+  /* Set array dimensions */
+  PROTECT(dim_Pt = NEW_INTEGER(3));
+  PROTECT(dim_Ptt = NEW_INTEGER(3));
+
+  INTEGER(dim_Pt)[0] = m;
+  INTEGER(dim_Pt)[1] = m;
+  INTEGER(dim_Pt)[2] = n + 1;
+
+  INTEGER(dim_Ptt)[0] = m;
+  INTEGER(dim_Ptt)[1] = m;
+  INTEGER(dim_Ptt)[2] = n;
+
+  setAttrib(pt_output, R_DimSymbol, dim_Pt);
+  setAttrib(ptt_output, R_DimSymbol, dim_Ptt);
+
+  PROTECT(dim_Kt = NEW_INTEGER(3));
+  INTEGER(dim_Kt)[0] = m;
+  INTEGER(dim_Kt)[1] = d;
+  INTEGER(dim_Kt)[2] = n;
+  setAttrib(Kt_output, R_DimSymbol, dim_Kt);
+
+  /* Set array dimensions */
+  PROTECT(dim_Ftinv = NEW_INTEGER(2));
+  INTEGER(dim_Ftinv)[0] = d;
+  INTEGER(dim_Ftinv)[1] = n;
+
+  setAttrib(Ftinv_output, R_DimSymbol, dim_Ftinv);
+  setAttrib(vt_output, R_DimSymbol, dim_Ftinv);
+
+  /* Fill the list */
+  SET_VECTOR_ELT(ans, 0, att_output);
+  SET_VECTOR_ELT(ans, 1, at_output);
+  SET_VECTOR_ELT(ans, 2, ptt_output);
+  SET_VECTOR_ELT(ans, 3, pt_output);
+  SET_VECTOR_ELT(ans, 4, yt);
+  SET_VECTOR_ELT(ans, 5, Tt);
+  SET_VECTOR_ELT(ans, 6, Zt);
+  SET_VECTOR_ELT(ans, 7, Ftinv_output);
+  SET_VECTOR_ELT(ans, 8, vt_output);
+  SET_VECTOR_ELT(ans, 9, Kt_output);
+  SET_VECTOR_ELT(ans, 10, loglik);
+
+  /* Set the class to 'fkf' */
+  PROTECT(class_name = NEW_CHARACTER(1));
+  SET_STRING_ELT(class_name, 0, mkChar("fkf.SP"));
+  classgets(ans, class_name);
+
+  UNPROTECT(17);
+  return(ans);	
+}
+
+
+
+
+
+
+
+
+
 /************************************************************************************/
 /* ---------- ---------- Kalman filter: Sequential Processing ---------- ---------- */
 /************************************************************************************/
@@ -1193,9 +1348,9 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 	#endif
 		             
 	#ifdef DEBUGME
-	print_array(&at, 1, m, "at:");
-	print_array(&Pt, m, m, "Pt:");
-	Rprintf("\n---------- iteration nr. %i ----------\n", i+1);
+	print_array(at, 1, m, "at:");
+	print_array(Pt, m, m, "Pt:");
+	Rprintf("\n---------- iteration nr. %i ----------\n", t+1);
 	#endif
 
     //end iteration
@@ -1236,252 +1391,6 @@ Rprintf("\n---------- Recursion Complete ----------\n");
 /* ---------- ------------------ End Kalman Filter ------------------ ---------- */
 /*********************************************************************************/
 
-
-/************************************************************************************/
-/* ---------- --------- Kalman Smoothing Through Sequential Processing --------- ---*/
-/************************************************************************************/
-// This function performs Kalman smoothing. It iterates backwards through t.
-// void cfks_SP(/* Inputs */
-// 	int m, int d, int n,
-// 	double * yt,
-// 	double * Zt, int incZt,
-//     double * vt,
-//     double * Tt, int incTt,
-//     double * Kt,
-//     double * Ftinv,
-//     double * at,
-//     double * Pt
-// /* No outputs? Returns ahatt in at and Vt in Pt */
-// )
-// {
-
-//     int m_x_m = m * m;
-//     // int d_x_d = d * d;
-//     int m_x_d = m * d;
-
-//     int NAsum;
-//     // Kalman smoothing iterates backwards:
-//     int t = n - 1;
-
-
-//     /* integers and double precisions used in dcopy and dgemm */
-//     int intone = 1;
-//     double dblone = 1.0, dblminusone = -1.0, dblzero = 0.0;
-//     char *transpose = "T", *dont_transpose = "N";
-
-//     /* temporary arrays */
-//     double *tmpmxd = (double *) Calloc(m_x_d, double);
-//     double *tmpmxm = (double *) Calloc(m_x_m, double);
-//     double *tmpPt = (double *) Calloc(m_x_m, double);
-//     double *tmpN = (double *) Calloc(m_x_m, double);
-//     // double *tmpL = (double *) Calloc(m_x_m, double);
-
-//     /* temporary vecs */
-//     double *tmpr = (double *) Calloc(m, double);
-
-//     /* recursion parameters */
-//     double *N = (double *) Calloc(m_x_m,double);
-//     double *r = (double *) Calloc(m,double);
-
-//     double *L = (double *) Calloc(m_x_m, double);
-
-//     /* NA detection */
-//     int NAsum;
-//     int *NAindices = malloc(sizeof(int) * d);
-//     int *positions = malloc(sizeof(int) * d);
-
-//     /* create reduced arrays for case 3 (see below) */
-//     double *Zt_temp = malloc(sizeof(double) * (d - 1) * m);
-//     double *vt_temp = malloc(sizeof(double) * (d - 1));
-//     double *Ftinv_temp = malloc(sizeof(double) * (d - 1) * (d - 1));
-//     double *Kt_temp = malloc(sizeof(double) * (d - 1) * m);
-
-//     /* ---------- Begin iterations --------------*/
-//     while(t>-1){
-
-//         // The transitions from t to t-1 are identical to a standard Kalman smoother:
-//         /* at[,i] = at[,i] + Pt[,,i] %*% r[,i-1] */
-//         F77_NAME(dgemm)(dont_transpose, dont_transpose, &m,
-//                 &intone, &m, &dblone,
-//                 &Pt[m_x_m * t], &m,
-//                 r, &m,
-//                 &dblone, &at[m*t], &m FCONE FCONE);
-
-// 		// /* tmpmxm = Pt[,,i] %*% tmpN */
-// 		// F77_NAME(dgemm)(dont_transpose, dont_transpose, &m,
-// 		// 		&m, &m, &dblone,
-// 		// 		&Pt[m_x_m * i], &m, N, &m,
-// 		// 		&dblzero, tmpmxm, &m FCONE FCONE);
-
-// 		// /* Pt[,,i] = Pt[,,i] - tmpmxm%*% Pt[,,i] */
-// 		// F77_NAME(dcopy)(&m_x_m, &Pt[m_x_m * i], &intone, tmpPt, &intone);
-// 		// F77_NAME(dgemm)(dont_transpose, dont_transpose, &m, &m, &m, &dblminusone,
-// 		// 		tmpmxm, &m, tmpPt, &m,
-// 		// 		&dblone, &Pt[m_x_m *i], &m FCONE FCONE);
-
-
-//         // How many NA's are in observation yt[,i] ?
-//         NAsum = numberofNA(&yt[d*t], NAindices, positions, d);
-        
-// 		/*****************************************/
-// 		/* ---------- case 1: no NA's:---------- */
-// 		/*****************************************/
-// 		if(NAsum == 0)
-// 		{
-// 			//Sequential Processing - Univariate Treatment of the Multivariate Series:
-// 			for(int SP=d; SP > 0; SP--)
-// 			{
-	
-// 			}
-
-
-// }
-
-
-
-
-/*********************************************************************************/
-/* ---------- --------------- Convert between R and C  -------------- ---------- */
-/*********************************************************************************/
-SEXP fkf_SP_verbose(SEXP a0, SEXP P0, SEXP dt, SEXP ct, SEXP Tt,
-	SEXP Zt, SEXP HHt, SEXP GGt, SEXP yt)
-{
-
-// Dimensions required for the called cfkf_SP_verbose function:
-	int m = length(a0);
-	int d = INTEGER(GET_DIM(yt))[0];
-	int n = INTEGER(GET_DIM(yt))[1];
-	
-  	int m_x_n = m * n;
-  	int m_x_m_x_n = m * m * n;
-	int d_x_n = d * n;
-  	double dbl_NA = NA_REAL;
-    int intzero = 0, intone = 1;
-// Symbolic expression - R data types. Essentially :
-	
-	SEXP loglik, at_output, att_output, pt_output, ptt_output, Ftinv_output,vt_output,Kt_output,ans, ans_names;
-	SEXP dim_at, dim_att, dim_Pt, dim_Ptt, dim_Kt,dim_Ftinv,class_name;
-	
-  /* Allocate memory for objects to be returned and set values to NA. */
-	PROTECT(loglik = NEW_NUMERIC(1));
-	PROTECT(att_output = NEW_NUMERIC(m * n));
-  	PROTECT(at_output = NEW_NUMERIC(m * (n + 1)));
-  	PROTECT(ptt_output = NEW_NUMERIC(m * m * n));
-  	PROTECT(pt_output = NEW_NUMERIC(m * m * (n + 1)));
-  	PROTECT(Ftinv_output = NEW_NUMERIC(d * n));
-  	PROTECT(vt_output = NEW_NUMERIC(d * n));
-  	PROTECT(Kt_output = NEW_NUMERIC(m * n));
-
-
-    //Set dimensions
-    F77_NAME(dcopy)(&m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(att_output), &intone);
-  	F77_NAME(dcopy)(&m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(at_output), &intone);
-  	F77_NAME(dcopy)(&m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(Kt_output), &intone);
-  	F77_NAME(dcopy)(&m_x_m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(ptt_output), &intone);
-  	F77_NAME(dcopy)(&m_x_m_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(pt_output), &intone);
-  	F77_NAME(dcopy)(&d_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(vt_output), &intone);
-  	F77_NAME(dcopy)(&d_x_n, &dbl_NA, &intzero, NUMERIC_POINTER(Ftinv_output), &intone);
-
-
-	cfkf_SP_verbose(m, d, n,
-	// Input
-		NUMERIC_POINTER(a0), NUMERIC_POINTER(P0),
-		NUMERIC_POINTER(dt), INTEGER(GET_DIM(dt))[1] == n,
-		NUMERIC_POINTER(ct), INTEGER(GET_DIM(ct))[1] == n,
-		NUMERIC_POINTER(Tt), INTEGER(GET_DIM(Tt))[2] == n,
-		NUMERIC_POINTER(Zt), INTEGER(GET_DIM(Zt))[2] == n,
-		NUMERIC_POINTER(HHt), INTEGER(GET_DIM(HHt))[2] == n,
-		NUMERIC_POINTER(GGt), INTEGER(GET_DIM(GGt))[1] == n,
-	// Output
-		NUMERIC_POINTER(yt),
-		NUMERIC_POINTER(loglik),
-		NUMERIC_POINTER(at_output),
-		NUMERIC_POINTER(att_output),
-		NUMERIC_POINTER(pt_output),
-		NUMERIC_POINTER(ptt_output),
-		NUMERIC_POINTER(Ftinv_output),
-		NUMERIC_POINTER(vt_output),
-		NUMERIC_POINTER(Kt_output)		
-		);
-
-  /* Produce named return list */
-  PROTECT(ans = NEW_LIST(8));
-  PROTECT(ans_names = NEW_CHARACTER(8));
-  SET_STRING_ELT(ans_names, 0, mkChar("att"));
-  SET_STRING_ELT(ans_names, 1, mkChar("at"));
-  SET_STRING_ELT(ans_names, 2, mkChar("Ptt"));
-  SET_STRING_ELT(ans_names, 3, mkChar("Pt"));
-  SET_STRING_ELT(ans_names, 4, mkChar("Ftinv"));
-  SET_STRING_ELT(ans_names, 5, mkChar("vt"));
-  SET_STRING_ELT(ans_names, 6, mkChar("Kt"));
-  SET_STRING_ELT(ans_names, 7, mkChar("logLik"));
-
-
-  setAttrib(ans, R_NamesSymbol, ans_names);
-  // Set matrix dimensions:
-  PROTECT(dim_at = NEW_INTEGER(2));
-  PROTECT(dim_att = NEW_INTEGER(2));
-
-  PROTECT(dim_Kt = NEW_INTEGER(2));
-
-
-  INTEGER(dim_at)[0] = m;
-  INTEGER(dim_at)[1] = n + 1;
-
-  INTEGER(dim_att)[0] = m;
-  INTEGER(dim_att)[1] = n;
-
-  INTEGER(dim_Kt)[0] = m;
-  INTEGER(dim_Kt)[1] = n;
-
-  setAttrib(at_output, R_DimSymbol, dim_at);
-  setAttrib(att_output, R_DimSymbol, dim_att);
-  setAttrib(Kt_output, R_DimSymbol, dim_Kt);
-
-  /* Set array dimensions */
-  PROTECT(dim_Pt = NEW_INTEGER(3));
-  PROTECT(dim_Ptt = NEW_INTEGER(3));
-
-  INTEGER(dim_Pt)[0] = m;
-  INTEGER(dim_Pt)[1] = m;
-  INTEGER(dim_Pt)[2] = n + 1;
-
-  INTEGER(dim_Ptt)[0] = m;
-  INTEGER(dim_Ptt)[1] = m;
-  INTEGER(dim_Ptt)[2] = n;
-
-  setAttrib(pt_output, R_DimSymbol, dim_Pt);
-  setAttrib(ptt_output, R_DimSymbol, dim_Ptt);
-
-  /* Set array dimensions */
-  PROTECT(dim_Ftinv = NEW_INTEGER(2));
-  INTEGER(dim_Ftinv)[0] = d;
-  INTEGER(dim_Ftinv)[1] = n;
-
-  setAttrib(Ftinv_output, R_DimSymbol, dim_Ftinv);
-  setAttrib(vt_output, R_DimSymbol, dim_Ftinv);
-
-
-
-  /* Fill the list */
-  SET_VECTOR_ELT(ans, 0, att_output);
-  SET_VECTOR_ELT(ans, 1, at_output);
-  SET_VECTOR_ELT(ans, 2, ptt_output);
-  SET_VECTOR_ELT(ans, 3, pt_output);
-  SET_VECTOR_ELT(ans, 4, Ftinv_output);
-  SET_VECTOR_ELT(ans, 5, vt_output);
-  SET_VECTOR_ELT(ans, 6, Kt_output);
-  SET_VECTOR_ELT(ans, 7, loglik);
-
-  /* Set the class to 'fkf' */
-  PROTECT(class_name = NEW_CHARACTER(1));
-  SET_STRING_ELT(class_name, 0, mkChar("fkf.SP_verbose"));
-  classgets(ans, class_name);
-
-  UNPROTECT(17);
-  return(ans);	
-}
-
 SEXP fkf_SP(SEXP a0, SEXP P0, SEXP dt, SEXP ct, SEXP Tt,
 	SEXP Zt, SEXP HHt, SEXP GGt, SEXP yt)
 {
@@ -1508,4 +1417,502 @@ SEXP fkf_SP(SEXP a0, SEXP P0, SEXP dt, SEXP ct, SEXP Tt,
 	UNPROTECT(1);
 	return(loglik);
 
+}
+
+
+
+
+
+
+/************************************************************************************/
+/* ---------- --------- Kalman Smoothing Through Sequential Processing --------- ---*/
+/************************************************************************************/
+// This function performs Kalman smoothing. It iterates backwards through t.
+void cfks_SP(/* Inputs */
+	int m, int d, int n,
+	double * Zt, int incZt,
+	double * yt,
+    double * vt,
+    double * Tt, int incTt,
+    double * Kt,
+    double * Ftinv, 
+	double * att,
+    double * Ptt
+	)
+/* No outputs? Returns ahatt in att and Vt in Ptt */
+{
+
+	#ifdef DEBUGME
+	Rprintf("\n---------- Recursion Start ----------\n");
+	#endif
+
+	// Initialise N and r:
+	// N is an (m x m x n)
+	// r is an m x m:
+	// K_t is an m x d x n.
+	// So, K_t,i is an m x 1.
+	// Z_(t,i) is a 1 x m.
+
+	// K_t is an m x n.
+	// Ftinv is a d x n.
+
+    int m_x_m = m * m;
+    // int d_x_d = d * d;
+    int m_x_d = m * d;
+
+	/* integers and double precisions used in dcopy and dgemm */
+	int intone = 1;
+	double dblone = 1.0, dblminusone = -1.0, dblzero = 0.0;
+	char *transpose = "T", *dont_transpose = "N";
+
+	/* temporary arrays */
+	double *tmpmxm = (double *) Calloc(m_x_m, double);
+	double *tmpPt = (double *) Calloc(m_x_m, double);
+	double *tmpN = (double *) Calloc(m_x_m, double);
+	double *tmpZ = (double *) Calloc(m, double);
+
+	/* temporary vecs */
+	// double *tmpr = (double *) Calloc(m, double);
+
+	/* NA detection */
+	int NAsum;
+	int *NAindices = malloc(sizeof(int) * d);
+	int *positions = malloc(sizeof(int) * d);
+
+	/* create reduced arrays for case 3 (see below) */
+	double *Zt_t   = malloc(sizeof(double) * (d * m));
+	double *Zt_temp = malloc(sizeof(double) * m);
+	double *Zt_NA  = malloc(sizeof(double) * (d - 1) * m);
+
+	double tmp_scalar;
+
+	/* recursion parameters */
+	double *N = (double *) Calloc(m_x_m,double);
+	double *r = (double *) Calloc(m,double);
+
+	double *tmpr = (double *) Calloc(m,double);
+
+	double *L = (double *) Calloc(m_x_m, double);
+
+	// Develop Identity matrix:
+	// int *identity_matrix = (int *) Calloc(m_x_m, int);
+	double *identity_matrix = (double *) Calloc(m_x_m, double);
+	for(int i=0;i<m;i++) {
+		identity_matrix[i*m + i] = 1.0;
+	}
+
+    // Kalman smoothing iterates backwards:
+	int t = n - 1;
+
+	// #ifdef DEBUGME
+	// print_array(identity_matrix, m, m, "Identity:");
+	// Rprintf("Initial n: %i\n", n);
+	// Rprintf("Initial t: %i\n", t);
+	// Rprintf("Initial m: %i\n", m);
+	// Rprintf("Initial d: %i\n", d);
+	// #endif
+
+    /* ---------- Begin iterations --------------*/
+	// What do we do when t == 0?
+    while(t>-1){
+
+		// Rprintf("t: %i\n", t);
+
+		/* ahat_t = P_t %*% r_t-1 + a_t */
+		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+			&m, &intone, &m, 
+			&dblone,
+			&Ptt[m_x_m * t], &m,
+			r, &m,
+			&dblone, &att[m*t], &m FCONE FCONE);
+
+		/* V_t = P_t - P_t %*% N_t-1 %*% P_t */
+		//Step 1: tmpmxm = P_t %*% N_t-1:
+		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+			&m, &m, &m, 
+			&dblone,
+			&Ptt[(m_x_m) * t], &m,
+			N, &m,
+			&dblzero, tmpmxm, &m FCONE FCONE);
+
+		/* Pt[,,i] = Pt[,,i] - tmpmxm%*% Pt[,,i] */
+		F77_NAME(dcopy)(&m_x_m, &Ptt[m_x_m * t], &intone, tmpPt, &intone);
+		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+				&m, &m, &m, 
+				&dblminusone,
+				tmpmxm, &m, 
+				tmpPt, &m,
+				&dblone, &Ptt[m_x_m *t], &m FCONE FCONE);
+
+		// Move from r_t,0 to r_(t-1),pt:
+		F77_NAME(dcopy)(&m, r, &intone, tmpr, &intone);
+		// r_(t-1),p_t = t(T_t-1) %*% r_t,0:
+		F77_NAME(dgemm)(transpose, dont_transpose, 
+			&m, &intone, &m, 
+			&dblone,
+			&Tt[m_x_m * t * incTt], &m,
+			tmpr, &m,
+			&dblzero, r, &m FCONE FCONE);
+
+		// F77_NAME(dgemm)(transpose, dont_transpose, 
+		// 	&m, &intone, &m, 
+		// 	&dblone,
+		// 	&Tt[m_x_m * t * incTt], &m,
+		// 	r, &m,
+		// 	&dblzero, r, &m FCONE FCONE);
+
+		// N_(t-1,p_t )= t(T_t-1) N_(t,0) T_(t-1)
+
+		// Step 1 - tmpmxm = t(T_t-1) %*% N
+		F77_NAME(dgemm)(transpose, dont_transpose, 
+			&m, &m, &m, 
+			&dblone,
+			&Tt[m_x_m * t * incTt], &m,
+			N, &m,
+			&dblzero, tmpmxm, &m FCONE FCONE);
+
+		// Step 2 - N = tmpmxm %*% T_(t-1)
+		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+			&m, &m, &m, 
+			&dblone,
+			tmpmxm, &m,
+			&Tt[m_x_m * t * incTt], &m,
+			&dblzero, N, &m FCONE FCONE);
+
+		// Rprintf("N at start: %f\n", N[0]);
+		// Rprintf("r at start: %f \n", r[0]);
+
+
+		/************************/
+		/* check for NA's in observation yt[,t] */
+		/************************/
+		NAsum = numberofNA(&yt[d*t], NAindices, positions, d);
+
+		/*********************************************************************************/
+		/* ---------- ---------- ---------- smoothing step ---------- ---------- -------- */
+		/*********************************************************************************/
+		// Case 1: No NA's:
+		if(NAsum==0){
+			//Create Zt for time t
+			F77_NAME(dcopy)(&m_x_d, &Zt[m_x_d * t * incZt], &intone, Zt_t, &intone);
+
+			//Sequential Processing - Univariate Treatment of the Multivariate Series:
+			for(int SP = d-1;SP > -1;SP--){
+
+				//Get the specific values of Z for SP:
+				// Confirmed Correct:
+				for(int j = 0; j < m; j++)
+				{
+				Zt_temp[j] = Zt_t[SP + j*d];
+				}
+
+				/* L_(t,i) = I_m - K_(t,i) %*% Z_(t,i) %*% F_(t,i)^-1 */
+				
+				// Step 1: L = I_m
+				F77_NAME(dcopy)(&m_x_m, identity_matrix, &intone, L, &intone);
+
+				// Step 2: tmp_scalar = -F_(t,i)^-1:
+				// Confirmed Correct:
+				tmp_scalar = - Ftinv[(d*t) + SP];
+
+				// Step 3: L_(t,i) = tmp_scalar * K_(t,i) %*% Z_(t,i) + L_(t,i):
+				// Confirmed Correct:
+				// F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+				// 	&m, &m, &intone, 
+				// 	&tmp_scalar,
+				// 	&Kt[m * t + (m * SP)], &m,
+				// 	Zt_temp, &m,
+				// 	&dblone, L, &m FCONE FCONE);
+				F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+					&m, &m, &intone, 
+					&dblminusone,
+					&Kt[m * t + (m * SP)], &m,
+					Zt_temp, &m,
+					&dblone, L, &m FCONE FCONE);
+
+
+				// F77_NAME(dgemm)(dont_transpose, transpose, 
+				// 	&m, &m, &intone, 
+				// 	&tmp_scalar,
+				// 	&Kt[m * t + (m * SP)], &m,
+				// 	Zt_temp, &m,
+				// 	&dblone, L, &m FCONE FCONE);
+
+				// #ifdef DEBUGME
+				// 	print_array(L, m, intone, "L_t,i:");
+				// #endif
+
+				// Rprintf("L: %f\n", L[0]);
+
+
+				/* r_t,i-1 = t(Z_t,i) %*% f_t,i^-1 %*% v_t,i + t(L_t,i) %*% r_t,i */
+
+				// Step 1: f_t,i^-1 * v_t,i (scalar * scalar)
+				tmp_scalar *= - vt[(d*t) + SP];
+				// Step 2: r = t(L_t,i) %*% r_t,i
+				F77_NAME(dcopy)(&m, &r[0], &intone, &tmpr[0], &intone);
+				F77_NAME(dgemm)(transpose, dont_transpose, 
+					&m,&intone, &m, 
+					&dblone,
+					L, &m,
+					tmpr, &m,
+					&dblzero, r, &m FCONE FCONE);
+				// Step 3: r_t,i-1 = Zt_tmp + r:
+				F77_NAME(daxpy)(&m, &tmp_scalar, Zt_temp, &intone, r, &intone);
+
+
+				/* N_t,i-1 = t(Z_t) %*% F^-1 %*% Z_t,i + t(L) %*% N_t,i %*% L */
+
+				// Step 1: tmpmxm = t(Z_t) %*% F^-1 %*% Z_t
+				F77_NAME(dgemm)(dont_transpose, transpose, 
+					&m, &m, &m, 
+					&Ftinv[(d*t) + SP],
+					Zt_temp, &m,
+					Zt_temp, &m,
+					&dblzero, tmpmxm, &m FCONE FCONE);
+				// F77_NAME(dcopy)(&m, Zt_temp, &intone, tmpZ, &intone);
+				// F77_NAME(dgemm)(dont_transpose, transpose, 
+				// 	&m, &m, &m, 
+				// 	&Ftinv[(d*t) + SP],
+				// 	tmpZ, &m,
+				// 	Zt_temp, &m,
+				// 	&dblzero, tmpmxm, &m FCONE FCONE);
+
+				// Step 2: tmpN = t(L) %*% N_t,i
+				// Confirmed Correct:
+				F77_NAME(dgemm)(transpose, dont_transpose, 
+					&m, &m, &m, 
+					&dblone,
+					L, &m,
+					N, &m,
+					&dblzero, tmpN, &m FCONE FCONE);
+				
+				// Step 3: N = tmpN %*% L
+				// Confirmed Correct:
+				F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+					&m, &m, &m, 
+					&dblone,
+					tmpN, &m,
+					L, &m,
+					&dblzero, N, &m FCONE FCONE);
+
+				// Step 4: N = N + tmpmxm
+				F77_NAME(daxpy)(&m_x_m, &dblone, tmpmxm, &intone, N, &intone);
+
+			}
+		}
+		/*******************************************/
+		/* ---------- case 2: some NA's ---------- */
+		/*******************************************/
+		else
+		{
+			int d_reduced = d - NAsum;
+			
+			//Temporary, reduced arrays:
+			reduce_array(&Zt[m_x_d * t * incZt], d, m, Zt_NA, positions, d_reduced);
+
+			// #ifdef DEBUGME
+			// print_int_array(positions, 1, d_reduced, "positions");
+			// print_array(Zt_NA, d_reduced, m, "Zt_NA");
+			// #endif
+
+			//Sequential Processing - Univariate Treatment of the Multivariate Series:
+			for(int SP=d_reduced - 1; SP > -1; SP--)
+			{    	
+
+				//Get the specific values of Z for SP:
+				for(int j = 0; j < m; j++)
+				{
+				Zt_temp[j] = Zt_NA[SP + j*d_reduced];
+				}
+
+				/* L_(t,i) = I_m - K_(t,i) %*% Z_(t,i) %*% F_(t,i)^-1 */
+				
+				// Step 1: L = I_m
+				F77_NAME(dcopy)(&m_x_m, identity_matrix, &intone, L, &intone);
+
+				// Step 2: tmp_scalar = -F_(t,i)^-1:
+				tmp_scalar = - Ftinv[(d_reduced*t) + SP];
+
+				// #ifdef DEBUGME
+				// 	Rprintf("- Ftinv: %f\n", tmp_scalar);
+				// #endif
+
+				// Step 3: L_(t,i) = tmp_scalar * K_(t,i) %*% Z_(t,i) + L_(t,i):
+				F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+					&m, &m, &intone, 
+					&dblminusone,
+					&Kt[m * t + (m * SP)], &m,
+					Zt_temp, &m,
+					&dblone, L, &m FCONE FCONE);
+
+				// F77_NAME(dgemm)(dont_transpose, transpose, 
+				// 	&m, &m, &intone, 
+				// 	&tmp_scalar,
+				// 	&Kt[m * t + (m * SP)], &m,
+				// 	Zt_temp, &m,
+				// 	&dblone, L, &m FCONE FCONE);
+
+				// #ifdef DEBUGME
+				// 	print_array(L, m, intone, "L_t,i:");
+				// #endif
+
+				/* r_t,i-1 = t(Z_t,i) %*% f_t,i^-1 %*% v_t,i + t(L_t,i) %*% r_t,i */
+
+				// Step 1: f_t,i^-1 * v_t,i (scalar * scalar)
+				tmp_scalar *= - vt[(d_reduced*t) + SP];
+				// Step 2: r = t(L_t,i) %*% r_t,i
+				F77_NAME(dcopy)(&m, &r[0], &intone, &tmpr[0], &intone);
+				F77_NAME(dgemm)(transpose, dont_transpose, 
+					&m,&intone, &m, 
+					&dblone,
+					L, &m,
+					tmpr, &m,
+					&dblzero, r, &m FCONE FCONE);
+				// Step 3: r_t,i-1 = Zt_tmp + r:
+				F77_NAME(daxpy)(&m, &tmp_scalar, Zt_temp, &intone, r, &intone);
+				// F77_NAME(dgemm)(transpose, dont_transpose, 
+				// 	&m,&intone, &m, 
+				// 	&dblone,
+				// 	L, &m,
+				// 	r, &m,
+				// 	&dblzero, r, &m FCONE FCONE);
+				// // Step 3: r_t,i-1 = Zt_tmp + r:
+				// F77_NAME(daxpy)(&m, &tmp_scalar, Zt_temp, &intone, r, &intone);
+
+				/* N_t,i-1 = t(Z_t) %*% F^-1 %*% Z_t,i + t(L) %*% N_t,i %*% L */
+
+				// Step 1: tmpmxm = t(Z_t) %*% F^-1 %*% Z_t
+				F77_NAME(dgemm)(dont_transpose, transpose, 
+					&m, &m, &m, 
+					&Ftinv[(d_reduced*t) + SP],
+					Zt_temp, &m,
+					Zt_temp, &m,
+					&dblzero, tmpmxm, &m FCONE FCONE);
+
+				// Step 2: tmpN = t(L) %*% N_t,i
+				F77_NAME(dgemm)(transpose, dont_transpose, 
+					&m, &m, &m, 
+					&dblone,
+					L, &m,
+					N, &m,
+					&dblzero, tmpN, &m FCONE FCONE);
+					
+				// Step 3: N = tmpN %*% L
+				F77_NAME(dgemm)(dont_transpose, dont_transpose, 
+					&m, &m, &m, 
+					&dblone,
+					tmpN, &m,
+					L, &m,
+					&dblzero, N, &m FCONE FCONE);
+
+				// Step 4: N = N + tmpmxm
+				F77_NAME(daxpy)(&m_x_m, &dblone, tmpmxm, &intone, N, &intone);
+			}
+		}
+
+	// The values of r_t,0 and N_t,0 are identical to r_t-1 and N_t-1, respectively:
+
+	// Rprintf("N at end: %f\n", N[0]);
+	// Rprintf("r at end: %f \n", r[0]);
+
+
+		// print_array(N, m, intone, "N:");
+		// print_array(r, m, intone, "r:");
+
+	// The values for r_(t,0) and N_(t,0) are the same as the values for the smoothing quantities of r_(t-1) and N_(t-1) of the standard smoothing equations, respectively.
+	// #ifdef DEBUGME
+		// print_array(N, m, intone, "N:");
+		// print_array(r, m, intone, "r:");
+	// #endif
+
+
+	// #ifdef DEBUGME
+	// 	print_array(N, m, intone, "N:");
+	// 	print_array(r, m, intone, "r:");
+	// #endif
+
+	// Iterate backwards through time:
+	t--;
+	}
+
+	//Memory clean - free vectors / matrices:
+	free(NAindices);
+	free(positions);
+	free(Zt_temp);
+	free(Zt_t);
+	free(Zt_NA);
+
+	// #ifdef DEBUGME
+	// Rprintf("\n---------- Recursion End ----------\n");
+	// #endif
+
+}
+
+
+/*********************************************************************************/
+/* ---------- --------------- Convert between R and C  -------------- ---------- */
+/*********************************************************************************/
+SEXP fks_SP(SEXP Tt, SEXP Zt,SEXP yt,SEXP vt, SEXP Kt, SEXP Ftinv, SEXP att, SEXP Ptt)
+{
+
+	// Dimensions required for the called cfks_SP function:
+	int m = INTEGER(GET_DIM(Tt))[0];
+	int d = INTEGER(GET_DIM(vt))[0];
+	int n = INTEGER(GET_DIM(vt))[1];
+
+	// Symbolic expression - R data types. Essentially :
+	SEXP ans, ans_names, class_name;
+	SEXP dim_att, dim_Ptt;
+
+	cfks_SP(m, d, n,
+		// Input
+		NUMERIC_POINTER(Zt), INTEGER(GET_DIM(Zt))[2] == n,
+		NUMERIC_POINTER(yt),
+		NUMERIC_POINTER(vt),
+		NUMERIC_POINTER(Tt), INTEGER(GET_DIM(Tt))[2] == n,
+		NUMERIC_POINTER(Kt),
+		NUMERIC_POINTER(Ftinv),
+		NUMERIC_POINTER(att),
+		NUMERIC_POINTER(Ptt)
+	);
+
+	/* Produce named return list */
+	PROTECT(ans = NEW_LIST(2));
+	PROTECT(ans_names = NEW_CHARACTER(2));
+	SET_STRING_ELT(ans_names, 0, mkChar("ahatt"));
+	SET_STRING_ELT(ans_names, 1, mkChar("Vt"));
+
+	setAttrib(ans, R_NamesSymbol, ans_names);
+
+	/* Coerce vectors to matrices and arrays */
+
+	/* Set matrix dimensions */
+	PROTECT(dim_att = NEW_INTEGER(2));
+
+	INTEGER(dim_att)[0] = m;
+	INTEGER(dim_att)[1] = n;
+
+	setAttrib(att, R_DimSymbol, dim_att);
+
+	/* Set array dimensions */
+	PROTECT(dim_Ptt = NEW_INTEGER(3));
+
+	INTEGER(dim_Ptt)[0] = m;
+	INTEGER(dim_Ptt)[1] = m;
+	INTEGER(dim_Ptt)[2] = n;
+
+	setAttrib(Ptt, R_DimSymbol, dim_Ptt);
+
+	/* Fill the list */
+	SET_VECTOR_ELT(ans, 0, att);
+	SET_VECTOR_ELT(ans, 1, Ptt);
+
+	/* Set the class to 'fkf' */
+	PROTECT(class_name = NEW_CHARACTER(1));
+	SET_STRING_ELT(class_name, 0, mkChar("fks.SP"));
+	classgets(ans, class_name);
+
+	UNPROTECT(5);
+	return(ans);
 }
