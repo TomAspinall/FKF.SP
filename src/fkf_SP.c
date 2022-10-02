@@ -1469,7 +1469,7 @@ void cfks_SP(/* Inputs */
 	double *tmpmxm = (double *) Calloc(m_x_m, double);
 	double *tmpPt = (double *) Calloc(m_x_m, double);
 	double *tmpN = (double *) Calloc(m_x_m, double);
-	double *tmpZ = (double *) Calloc(m, double);
+	// double *tmpZ = (double *) Calloc(m, double);
 
 	/* temporary vecs */
 	// double *tmpr = (double *) Calloc(m, double);
