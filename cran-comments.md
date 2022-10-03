@@ -13,4 +13,4 @@
 
 'NFCP' is a downstream dependency. I have run R CMD check, which passed with 0 errors, warnings and notes.
 
-* This is an update of an existing release (0.1.3 -> 0.2.0)
+* This is an update of an existing release (0.2.0 -> 0.3.0)

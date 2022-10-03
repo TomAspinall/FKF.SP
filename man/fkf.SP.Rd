@@ -36,7 +36,14 @@ When \code{verbose = TRUE}, a list with the following elements is also returned,
 \tabular{rl}{
 \code{att} \tab A \eqn{m \times n}{m * n}-matrix containing the filtered state variables, i.e. \code{att[,t]} = \eqn{a_{t|t}}{a(t|t)}.\cr
 \code{at} \tab A \eqn{m \times (n + 1)}{m * (n + 1)}-matrix containing the predicted state variables, i.e. \code{at[,t]} = \eqn{a_t}{a(t)}.\cr
-\code{Ptt} \tab A \eqn{m \times m \times n}{m * m * n}-array containing the variance of att, i.e. \code{Ptt[,,t]} = \eqn{P_{t|t}}{P(t|t)}.\cr
+\code{Ptt} \tab A \eqn{m \times m \times n}{m * m * n}-array containing the variance of att, i.e. \code{Ptt[,,t]} = \eqn{P_{t}}{P(t)}.\cr
+\code{Pt} \tab A \eqn{m \times m \times (n+1}{m * m * (n+1)}-array containing the variance of at, i.e. \code{Pt[,,t]} = \eqn{P_{t}}{P(t)}.\cr
+\code{yt} \tab A \eqn{d \times n}{d * n }matrix containing the input observations.\cr
+\code{Tt} \tab either a \eqn{m \times m \times n}{m * m * n} or a \eqn{m \times m \times 1}{m * m * 1} array, depending on the argument provided. \cr
+\code{Zt} \tab either a \eqn{d \times m \times n}{d * m * n} or a \eqn{d \times m \times 1}{d * m * 1} array, depending on the argument provided.. \cr
+\code{Ftinv} \tab A \eqn{d \times n}{d * n }matrix containing the scalar inverse of the prediction error variances. \cr
+\code{vt} \tab A \eqn{d \times n}{d * n }matrix containing the observation error.\cr
+\code{Kt} \tab A \eqn{m \time d \times n}{m * d * n }-array containing the Kalman gain of state variables at each observation.\cr
 \code{logLik} \tab The log-likelihood.
 }
 

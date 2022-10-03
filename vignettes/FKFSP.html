@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Fast Kalman Filtering using Sequential Processing</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Fast Kalman Filtering using Sequential
+Processing</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This document provides worked examples of Kalman filtering using the
+‘fkf.SP’ function of the ‘FKF.SP’ package. Sequential processing of the
+Kalman filter algorithm benefits from substantial and significant
+decreases in computation time. However, it requires the additional
+assumption that the variance of the measurement equation / observations
+are independent. This assumption allows filtering to be performed
+through a sequential processing method (i.e. a univariate treatment of
+the multivariate process) - increasing computational efficiency. This
+assumption occurs frequently enough to justify the application of
+sequential processing.</p>
+<p>The ‘fkf’ function of the package ‘FKF’ (Fast Kalman Filter) is a
+function call of the traditional Kalman filter algorithm that is
+designed to maximize computational efficiency of the traditional
+filtering process. This vignette compares the computation times between
+these two Kalman filter algorithms.</p>
+<p>This vignette provides four worked examples, comparing the
+computational efficiencies of the ‘fkf’ and ‘fkf.SP’ functions for
+maximum likelihood estimation (MLE). The first three examples were first
+presented within the associated vignette of the ‘FKF’ package, with the
+fourth being unique to the vignette. As well as the increase in
+processing time generated by the ‘fkf.SP’ function, this vignette
+further presents and explains the erronous difference in log-likelihood
+values returned by the ‘fkf’ and ‘fkf.SP’ functions when there are
+missing observations (i.e. NA’s are present within argument ‘yt’).</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">##The packages &#39;FKF&#39;, &#39;stats&#39; and &#39;NFCP&#39; are required for this Vignette:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(FKF.SP)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(FKF)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stats)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(NFCP)</span></code></pre></div>
+</div>
+<div id="example-1---arma21-model-estimation." class="section level2">
+<h2>Example 1 - ARMA(2,1) model estimation.</h2>
+<p>Autoregression moving average models can be estimated through Kalman
+filtering. See also help(makeARIMA) and help(KalmanRun).</p>
+<p>Step 1 - Sample from an ARMA(2, 1) process through the ‘stats’
+package to simulate observations:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set constants:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="do">## Length of series</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="do">## AR parameters</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>AR <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">ar1 =</span> <span class="fl">0.6</span>, <span class="at">ar2 =</span> <span class="fl">0.2</span>, <span class="at">ma1 =</span> <span class="sc">-</span><span class="fl">0.2</span>, <span class="at">sigma =</span> <span class="fu">sqrt</span>(<span class="fl">0.2</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate observations:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">arima.sim</span>(<span class="at">model =</span> <span class="fu">list</span>(<span class="at">ar =</span> AR[<span class="fu">c</span>(<span class="st">&quot;ar1&quot;</span>, <span class="st">&quot;ar2&quot;</span>)], <span class="at">ma =</span> AR[<span class="st">&quot;ma1&quot;</span>]), <span class="at">n =</span> n,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">innov =</span> <span class="fu">rnorm</span>(n) <span class="sc">*</span> AR[<span class="st">&quot;sigma&quot;</span>])</span></code></pre></div>
+<p>Step 2 - Create a state space representation of the four ARMA
+parameters:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>arma21ss <span class="ot">&lt;-</span> <span class="cf">function</span>(ar1, ar2, ma1, sigma) {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>Tt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(ar1, ar2, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>Zt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>), <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>ct <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>dt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="dv">2</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>GGt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>H <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, ma1), <span class="at">nrow =</span> <span class="dv">2</span>) <span class="sc">*</span> sigma</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>HHt <span class="ot">&lt;-</span> H <span class="sc">%*%</span> <span class="fu">t</span>(H)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>a0 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="do">## Diffuse assumption</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>P0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fl">1e6</span>, <span class="at">nrow =</span> <span class="dv">2</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(<span class="fu">list</span>(<span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">ct =</span> ct, <span class="at">dt =</span> dt, <span class="at">Zt =</span> Zt, <span class="at">Tt =</span> Tt, <span class="at">GGt =</span> GGt,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">HHt =</span> HHt))}</span></code></pre></div>
+<p>Parameter estimation is performed through MLE, which involves
+optimizing the log-likelihood returned by the Kalman filter through the
+‘optim’ function. Many other optimization procedures are available
+within R for more difficult optimization procedures (such as the package
+‘rgenoud’), such as when the log-likelihood is discontinuous, or
+multiple state variables are considered.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The objective function passed to &#39;optim&#39;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>objective <span class="ot">&lt;-</span> <span class="cf">function</span>(theta, yt, SP) {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">arma21ss</span>(theta[<span class="st">&quot;ar1&quot;</span>], theta[<span class="st">&quot;ar2&quot;</span>], theta[<span class="st">&quot;ma1&quot;</span>], theta[<span class="st">&quot;sigma&quot;</span>])</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Kalman filtering through the &#39;fkf.SP&#39; function:</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(SP){</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a> ans <span class="ot">&lt;-</span> <span class="sc">-</span> <span class="fu">fkf.SP</span>(<span class="at">a0 =</span> param<span class="sc">$</span>a0, <span class="at">P0 =</span> param<span class="sc">$</span>P0, <span class="at">dt =</span> param<span class="sc">$</span>dt, <span class="at">ct =</span> param<span class="sc">$</span>ct, </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">Tt =</span> param<span class="sc">$</span>Tt, <span class="at">Zt =</span> param<span class="sc">$</span>Zt, <span class="at">HHt =</span> param<span class="sc">$</span>HHt, <span class="at">GGt =</span> param<span class="sc">$</span>GGt, </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">yt =</span> yt, <span class="at">verbose =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>logLik</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a> }</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Kalman filtering through the &#39;fkf&#39; function:</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a> <span class="cf">else</span>{</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a> ans <span class="ot">&lt;-</span> <span class="sc">-</span> <span class="fu">fkf</span>(<span class="at">a0 =</span> param<span class="sc">$</span>a0, <span class="at">P0 =</span> param<span class="sc">$</span>P0, <span class="at">dt =</span> param<span class="sc">$</span>dt, <span class="at">ct =</span> param<span class="sc">$</span>ct, <span class="at">Tt =</span> param<span class="sc">$</span>Tt,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">Zt =</span> param<span class="sc">$</span>Zt, <span class="at">HHt =</span> param<span class="sc">$</span>HHt, <span class="at">GGt =</span> param<span class="sc">$</span>GGt, <span class="at">yt =</span> yt)<span class="sc">$</span>logLik</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a> }</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a> <span class="fu">return</span>(ans)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="do">##Optim minimizes functions by default, so the negative is returned</span></span></code></pre></div>
+<p>Step 3 - Estimate parameters through MLE:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This test estimates parameters through &#39;optim&#39;.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Please run the complete chunk for a fair comparison:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Initial values:</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">ar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>), <span class="at">ma1 =</span> <span class="dv">0</span>, <span class="at">sigma =</span> <span class="dv">1</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="do">###MLE through the &#39;fkf&#39; function:</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>start <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>FKF_estimation <span class="ot">&lt;-</span> <span class="fu">optim</span>(theta, objective, <span class="at">yt =</span> <span class="fu">rbind</span>(a), <span class="at">hessian =</span> <span class="cn">TRUE</span>, <span class="at">SP =</span> F)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>FKF_runtime <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="do">###MLE through the &#39;fkf.SP&#39; function:</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>start <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>FKF.SP_estimation <span class="ot">&lt;-</span> <span class="fu">optim</span>(theta, objective, <span class="at">yt =</span> <span class="fu">rbind</span>(a), <span class="at">hessian =</span> <span class="cn">TRUE</span>, <span class="at">SP =</span> T)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>FKF.SP_runtime <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span></code></pre></div>
+<p>The MLE process applying both functions has returned identical
+estimated parameters:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">rbind</span>(<span class="at">FKF.SP =</span> FKF.SP_estimation<span class="sc">$</span>par, <span class="at">FKF =</span> FKF_estimation<span class="sc">$</span>par))</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              ar1       ar2        ma1     sigma</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF.SP 0.5534615 0.2276404 -0.1413417 0.4525427</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF    0.5534615 0.2276404 -0.1413417 0.4525427</span></span></code></pre></div>
+<p>As well as an identical call count number for both functions:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="at">FKF.SP =</span> FKF.SP_estimation<span class="sc">$</span>counts[<span class="dv">1</span>], <span class="at">FKF =</span> FKF_estimation<span class="sc">$</span>counts[<span class="dv">1</span>]))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF.SP.function    FKF.function </span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             265             265</span></span></code></pre></div>
+<p>Utilizing Sequential Processing, however, we’ve decreased processing
+time:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="at">FKF.SP =</span> FKF.SP_runtime, <span class="at">FKF =</span> FKF_runtime))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time differences in secs</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   FKF.SP      FKF </span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.816309 1.242510</span></span></code></pre></div>
+<p>Finally, under a variety of purposes, such as when parameters of the
+system have been estimated, it can be valuable to evaluate filtered
+state variables.</p>
+<p>The filtered state variables and their filtered covariances are also
+identical between FKF and FKF.SP:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>FKF.SP_parameters <span class="ot">&lt;-</span> <span class="fu">arma21ss</span>(FKF.SP_estimation<span class="sc">$</span>par[<span class="dv">1</span>], FKF.SP_estimation<span class="sc">$</span>par[<span class="dv">2</span>], FKF.SP_estimation<span class="sc">$</span>par[<span class="dv">3</span>], FKF.SP_estimation<span class="sc">$</span>par[<span class="dv">4</span>])</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>FKF_parameters <span class="ot">&lt;-</span> <span class="fu">arma21ss</span>(FKF_estimation<span class="sc">$</span>par[<span class="dv">1</span>], FKF_estimation<span class="sc">$</span>par[<span class="dv">2</span>], FKF_estimation<span class="sc">$</span>par[<span class="dv">3</span>], FKF_estimation<span class="sc">$</span>par[<span class="dv">4</span>])</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>FKF_output <span class="ot">&lt;-</span> FKF<span class="sc">::</span><span class="fu">fkf</span>(FKF_parameters<span class="sc">$</span>a0, FKF_parameters<span class="sc">$</span>P0, FKF_parameters<span class="sc">$</span>dt, FKF_parameters<span class="sc">$</span>ct, FKF_parameters<span class="sc">$</span>Tt, FKF_parameters<span class="sc">$</span>Zt, FKF_parameters<span class="sc">$</span>HHt, FKF_parameters<span class="sc">$</span>GGt, <span class="fu">rbind</span>(a))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>FKF.SP_output <span class="ot">&lt;-</span> FKF.SP<span class="sc">::</span><span class="fu">fkf.SP</span>(FKF_parameters<span class="sc">$</span>a0, FKF_parameters<span class="sc">$</span>P0, FKF_parameters<span class="sc">$</span>dt, FKF_parameters<span class="sc">$</span>ct, FKF_parameters<span class="sc">$</span>Tt, FKF_parameters<span class="sc">$</span>Zt, FKF_parameters<span class="sc">$</span>HHt, FKF_parameters<span class="sc">$</span>GGt, <span class="fu">rbind</span>(a), <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">t</span>(<span class="fu">rbind</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># FKF</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>FKF_output<span class="sc">$</span>att[<span class="dv">1</span>,],</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># FKF.SP</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>FKF.SP_output<span class="sc">$</span>att[<span class="dv">1</span>,]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>))))</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             [,1]        [,2]</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,] -0.10747402 -0.10747402</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,]  0.03851773  0.03851773</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,] -0.14022187 -0.14022187</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [4,] -0.17502093 -0.17502093</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [5,]  0.20129593  0.20129593</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [6,]  0.27238242  0.27238242</span></span></code></pre></div>
+<p>Under the condition that observations (i.e., the measurement error)
+are independent, a condition that occurs under many cases, it is
+therefore significantly beneficial to adopt sequential processing.</p>
+</div>
+<div id="example-2---local-level-model-for-the-niles-annual-flow" class="section level2">
+<h2>Example 2 - Local level model for the Nile’s annual flow:</h2>
+<p>This example presents differences in the computational time of the
+‘fkf.SP’ and ‘fkf’ functions to the famous Nile dataset.</p>
+<p>It also shows the difference in log-likelihood values returned by the
+two functions that occurs when NAs are within observations.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Transition equation:</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="do">## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Measurement equation:</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="do">## y[t] = alpha[t] + eps[t], eps[t] ~  N(0, GGt)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="do">##Complete Nile Data - no NA&#39;s</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>y_complete <span class="ot">&lt;-</span> y_incomplete <span class="ot">&lt;-</span> Nile</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="do">##Incomplete Nile Data - two NA&#39;s are present:</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>y_incomplete[<span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">10</span>)] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="do">## Set constant parameters:</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>dt <span class="ot">&lt;-</span> ct <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>Zt <span class="ot">&lt;-</span> Tt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>a0 <span class="ot">&lt;-</span> y_incomplete[<span class="dv">1</span>]   <span class="co"># Estimation of the first year flow</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>P0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">100</span>)     <span class="co"># Variance of &#39;a0&#39;</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># &#39;P0&#39; here is classified as a &#39;diffuse&#39; initial state. A large estimate of the variance of the initial state variable is used when no prior information regarding state variance is known. This is again a common approach when performing Kalman filtering, and has been empirically shown to have little influence on estimated parameters, as future estimations are transient to the initial state. This is highly dependent, however, on the observations filtered, and caution should be advised.</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="do">## Parameter estimation - maximum likelihood estimation:</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>Nile_MLE <span class="ot">&lt;-</span> <span class="cf">function</span>(yt, SP){</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="do">##Unknown parameters initial estimates:</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>GGt <span class="ot">&lt;-</span> HHt <span class="ot">&lt;-</span> <span class="fu">var</span>(yt, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> .<span class="dv">5</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Kalman filtering through the &#39;fkf.SP&#39; function:</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(SP){</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">optim</span>(<span class="fu">c</span>(<span class="at">HHt =</span> HHt, <span class="at">GGt =</span> GGt),</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">fn =</span> <span class="cf">function</span>(par, ...)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>             <span class="sc">-</span><span class="fu">fkf.SP</span>(<span class="at">HHt =</span> <span class="fu">matrix</span>(par[<span class="dv">1</span>]), <span class="at">GGt =</span> <span class="fu">matrix</span>(par[<span class="dv">2</span>]), ...)<span class="sc">$</span>logLik,</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>             <span class="at">yt =</span> <span class="fu">rbind</span>(yt), <span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct,</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>             <span class="at">Zt =</span> Zt, <span class="at">Tt =</span> Tt, <span class="at">verbose =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Kalman filtering through the &#39;fkf&#39; function:</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">optim</span>(<span class="fu">c</span>(<span class="at">HHt =</span> HHt, <span class="at">GGt =</span> GGt),</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">fn =</span> <span class="cf">function</span>(par, ...)</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>             <span class="sc">-</span><span class="fu">fkf</span>(<span class="at">HHt =</span> <span class="fu">matrix</span>(par[<span class="dv">1</span>]), <span class="at">GGt =</span> <span class="fu">matrix</span>(par[<span class="dv">2</span>]), ...)<span class="sc">$</span>logLik,</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>             <span class="at">yt =</span> <span class="fu">rbind</span>(yt), <span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct,</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>             <span class="at">Zt =</span> Zt, <span class="at">Tt =</span> Tt))</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>}}</span></code></pre></div>
+<p>Performing parameter estimation using complete data, the fkf and
+fkf.SP functions return identical results:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fkf.SP_MLE_complete <span class="ot">&lt;-</span> <span class="fu">Nile_MLE</span>(y_complete, <span class="at">SP =</span> T)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>fkf_MLE_complete <span class="ot">&lt;-</span> <span class="fu">Nile_MLE</span>(y_complete, <span class="at">SP =</span> F)</span></code></pre></div>
+<p>fkf.SP:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fkf.SP_MLE_complete[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>])</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $par</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       HHt       GGt </span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1300.777 15247.773 </span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $value</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 637.626</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $counts</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function gradient </span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       57       NA</span></span></code></pre></div>
+<p>fkf:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fkf_MLE_complete[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>])</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $par</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       HHt       GGt </span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1300.777 15247.773 </span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $value</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 637.626</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $counts</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function gradient </span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       57       NA</span></span></code></pre></div>
+<p>Performing parameter estimation using incomplete data returns
+identical estimated parameters, but different log-likelihood values:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fkf.SP_MLE_incomplete <span class="ot">&lt;-</span> <span class="fu">Nile_MLE</span>(y_incomplete, <span class="at">SP =</span> T)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fkf_MLE_incomplete <span class="ot">&lt;-</span> <span class="fu">Nile_MLE</span>(y_incomplete, <span class="at">SP =</span> F)</span></code></pre></div>
+<p>‘fkf.SP’:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fkf.SP_MLE_incomplete[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>])</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $par</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       HHt       GGt </span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1385.066 15124.131 </span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $value</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 625.1676</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $counts</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function gradient </span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       53       NA</span></span></code></pre></div>
+<p>‘fkf’:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fkf_MLE_incomplete[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>])</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $par</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       HHt       GGt </span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1385.066 15124.131 </span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $value</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 627.0055</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $counts</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function gradient </span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       53       NA</span></span></code></pre></div>
+<p>The difference in log-likelihood values is equal to 1.8378771. This
+difference is equal to:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Number of NA values:</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>NA_values <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">which</span>(<span class="fu">is.na</span>(y_incomplete)))</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>( <span class="fl">0.5</span> <span class="sc">*</span> NA_values <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">2</span> <span class="sc">*</span> pi))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1.837877</span></span></code></pre></div>
+<p>The log-likelihood score for the Kalman filter is given by:</p>
+<p><span class="math display">\[ - \frac{1}{2}(n \times d \times
+log(2\pi)) - \frac{1}{2}\sum_{t=1}^{n}(log|F_t| +
+v&#39;F^{-1}v)\]</span> where <span class="math inline">\(n\)</span> is
+the number of discrete time-steps (i.e. the number of columns of object
+‘yt’) and <span class="math inline">\(d\)</span> is the number of
+observations at each time point (i.e. the number of rows of object
+‘yt’). <span class="math inline">\(v\)</span> and <span class="math inline">\(F_t\)</span> are the measurement error and
+function of the covariance matrix at time <span class="math inline">\(t\)</span> respectively. The ‘fkf’ function
+instantiates its log-likelihood score by calculating <span class="math inline">\(- 0.5 \times n \times d \times log(2\pi)\)</span>.
+Under the scenario where there are missing observations, however, <span class="math inline">\(d\)</span> would instead become <span class="math inline">\(d_t\)</span> where <span class="math inline">\(d_t
+\leq d \forall t\)</span>. The instantiated log-likelihood term would
+instead be <span class="math inline">\(- 0.5 ((n \times d)-2) \times
+log(2\pi)\)</span>, explaining this difference in log-likelihood scores.
+The ‘fkf’ function, in this case, therefore instantiates the
+log-likelihood score of two observations that are not actually
+observed.</p>
+<div id="speed-comparison---nile-data-10000-iterations" class="section level3">
+<h3>Speed Comparison - Nile Data (10,000 iterations):</h3>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This test uses estimated parameters of complete data. </span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Please run the complete chunk for a fair comparison:</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&#39;fkf&#39; </span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>start <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fl">1e4</span>) <span class="fu">fkf</span>(a0, P0, dt, ct, Tt, Zt, <span class="at">HHt =</span> <span class="fu">matrix</span>(fkf_MLE_complete<span class="sc">$</span>par[<span class="dv">1</span>]),</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">GGt =</span> <span class="fu">matrix</span>(fkf_MLE_complete<span class="sc">$</span>par[<span class="dv">2</span>]), <span class="at">yt =</span> <span class="fu">rbind</span>(y_complete))</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>FKF_runtime <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&#39;fkf.SP&#39;</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>start <span class="ot">=</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fl">1e4</span>) <span class="fu">fkf.SP</span>(a0, P0, dt, ct, Tt, Zt, <span class="at">HHt =</span> <span class="fu">matrix</span>(fkf.SP_MLE_complete<span class="sc">$</span>par[<span class="dv">1</span>]),</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>                       <span class="at">GGt =</span> <span class="fu">matrix</span>(fkf.SP_MLE_complete<span class="sc">$</span>par[<span class="dv">2</span>]), <span class="at">yt =</span> <span class="fu">rbind</span>(y_complete), <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>fkf.SP_runtime <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="at">FKF.SP =</span> fkf.SP_runtime, <span class="at">FKF =</span> FKF_runtime))</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time differences in secs</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    FKF.SP       FKF </span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.5935452 0.8212960</span></span></code></pre></div>
+<p>Utilizing Sequential Processing has decreased processing time.</p>
+</div>
+</div>
+<div id="example-3---tree-ring-data" class="section level2">
+<h2>Example 3 - Tree Ring Data:</h2>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This test estimates parameters 10 times through &#39;optim&#39;.</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Please run the complete chunk for a fair comparison:</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Transition equation:</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="do">## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Measurement equation:</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="do">## y[t] = alpha[t] + eps[t], eps[t] ~  N(0, GGt)</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="do">## tree-ring widths in dimensionless units</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> treering</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="do">## Set constant parameters:</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>dt <span class="ot">&lt;-</span> ct <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>)</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>Zt <span class="ot">&lt;-</span> Tt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>)</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>a0 <span class="ot">&lt;-</span> y[<span class="dv">1</span>]            <span class="co"># Estimation of the first width</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>P0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">100</span>)     <span class="co"># Variance of &#39;a0&#39;</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="do">##Time comparison - Estimate parameters 10 times:</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="do">###MLE through the &#39;fkf&#39; function:</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>start <span class="ot">=</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)  fit_fkf <span class="ot">&lt;-</span> <span class="fu">optim</span>(<span class="fu">c</span>(<span class="at">HHt =</span> <span class="fu">var</span>(y, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> .<span class="dv">5</span>,</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>                     <span class="at">GGt =</span> <span class="fu">var</span>(y, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> .<span class="dv">5</span>),</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>                   <span class="at">fn =</span> <span class="cf">function</span>(par, ...)</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>                     <span class="sc">-</span><span class="fu">fkf</span>(<span class="at">HHt =</span> <span class="fu">array</span>(par[<span class="dv">1</span>],<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>)), <span class="at">GGt =</span> <span class="fu">array</span>(par[<span class="dv">2</span>],<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>)), ...)<span class="sc">$</span>logLik,</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>                   <span class="at">yt =</span> <span class="fu">rbind</span>(y), <span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct,</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>                   <span class="at">Zt =</span> Zt, <span class="at">Tt =</span> Tt)</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>run_time_FKF <span class="ot">=</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="do">###MLE through the &#39;fkf.SP&#39; function:</span></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>start <span class="ot">=</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)  fit_fkf.SP <span class="ot">&lt;-</span> <span class="fu">optim</span>(<span class="fu">c</span>(<span class="at">HHt =</span> <span class="fu">var</span>(y, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> .<span class="dv">5</span>,</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>                        <span class="at">GGt =</span> <span class="fu">var</span>(y, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">*</span> .<span class="dv">5</span>),</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>                      <span class="at">fn =</span> <span class="cf">function</span>(par, ...)</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>                        <span class="sc">-</span><span class="fu">fkf.SP</span>(<span class="at">HHt =</span> <span class="fu">array</span>(par[<span class="dv">1</span>],<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>)), <span class="at">GGt =</span> <span class="fu">matrix</span>(par[<span class="dv">2</span>]),<span class="at">verbose =</span> <span class="cn">TRUE</span>, ...)<span class="sc">$</span>logLik,</span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>                      <span class="at">yt =</span> <span class="fu">rbind</span>(y), <span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct,</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>                      <span class="at">Zt =</span> Zt, <span class="at">Tt =</span> Tt)</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>run_time_FKF.SP <span class="ot">=</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="at">fkf.SP =</span> run_time_FKF.SP, <span class="at">fkf =</span> run_time_FKF))</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time differences in secs</span></span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   fkf.SP      fkf </span></span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1.184254 1.598096</span></span></code></pre></div>
+<p>Utilizing Sequential Processing has decreased processing time.</p>
+<p>Additionally - Identical filtered values are returned:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="do">## Filter tree ring data with estimated parameters using &#39;fkf&#39;:</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>fkf.obj <span class="ot">&lt;-</span> <span class="fu">fkf</span>(a0, P0, dt, ct, Tt, Zt, <span class="at">HHt =</span> <span class="fu">array</span>(fit_fkf<span class="sc">$</span>par[<span class="dv">1</span>],<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>)),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">GGt =</span> <span class="fu">array</span>(fit_fkf<span class="sc">$</span>par[<span class="dv">2</span>],<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>)), <span class="at">yt =</span> <span class="fu">rbind</span>(y))</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Filter tree ring data with estimated parameters using &#39;fkf.SP&#39;:</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>fkf.SP.obj <span class="ot">&lt;-</span> <span class="fu">fkf.SP</span>(a0, P0, dt, ct, Tt, Zt, <span class="at">HHt =</span> <span class="fu">array</span>(fit_fkf<span class="sc">$</span>par[<span class="dv">1</span>],<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>)),</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">GGt =</span> <span class="fu">matrix</span>(fit_fkf<span class="sc">$</span>par[<span class="dv">2</span>]), <span class="at">yt =</span> <span class="fu">rbind</span>(y), <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">cbind</span>(<span class="at">FKF =</span> fkf.obj<span class="sc">$</span>Ptt[<span class="dv">1</span>,,], <span class="at">FKF.SP =</span> fkf.SP.obj<span class="sc">$</span>Ptt[<span class="dv">1</span>,,])))</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             FKF     FKF.SP</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,] 0.08216834 0.08216834</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,] 0.04122259 0.04122259</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,] 0.02767374 0.02767374</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [4,] 0.02097740 0.02097740</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [5,] 0.01702170 0.01702170</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [6,] 0.01443543 0.01443543</span></span></code></pre></div>
+</div>
+<div id="example-4---fitting-a-geometric-brownian-motion-gbm-to-term-structure-data" class="section level2">
+<h2>Example 4 - Fitting a Geometric Brownian Motion (GBM) to Term
+Structure Data:</h2>
+<p>The Kalman filter can be used to fit stochastic models to time-series
+data of quoted prices of futures contracts of commodities. The following
+example estimates the parameters of a random walk (i.e. geometric
+Brownian motion) model for crude oil through MLE. Quoted futures
+contracts are available in the ‘NFCP’ package. See the ‘NFCP’
+documentation for more details on fitting commodity pricing models to
+term structure data.</p>
+<p>Step 1 - develop the objective function:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>yt <span class="ot">=</span> <span class="fu">t</span>(<span class="fu">log</span>(NFCP<span class="sc">::</span>SS_oil<span class="sc">$</span>contracts)) <span class="co"># quoted log futures prices</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>delta_t <span class="ot">&lt;-</span> NFCP<span class="sc">::</span>SS_oil<span class="sc">$</span>dt <span class="co"># Discrete time step</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="do">##time to maturity of quoted futures contracts:</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>TTM <span class="ot">&lt;-</span> <span class="fu">t</span>(NFCP<span class="sc">::</span>SS_oil<span class="sc">$</span>contract_maturities)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>a0 <span class="ot">&lt;-</span> yt[<span class="dv">1</span>,<span class="dv">1</span>]     <span class="co"># initial estimate</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>P0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">100</span>) <span class="co"># Variance of &#39;a0&#39;</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="do">## GBM Function</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>gbm_mle <span class="ot">&lt;-</span> <span class="cf">function</span>(theta, SP){</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>ct <span class="ot">&lt;-</span> theta[<span class="st">&quot;alpha_rn&quot;</span>] <span class="sc">*</span> TTM</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>dt <span class="ot">&lt;-</span> (theta[<span class="st">&quot;alpha&quot;</span>] <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> theta[<span class="st">&quot;sigma&quot;</span>]<span class="sc">^</span><span class="dv">2</span>) <span class="sc">*</span> delta_t</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>Zt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(yt))</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>HHt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(theta[<span class="st">&quot;sigma&quot;</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> delta_t)</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>Tt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="do">##&#39;fkf.SP&#39; requires a vector of the diagonal elements of the variances of the measurement error </span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(SP){</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>GGt <span class="ot">=</span> <span class="fu">rep</span>(theta[<span class="st">&quot;ME_1&quot;</span>]<span class="sc">^</span><span class="dv">2</span>, <span class="fu">nrow</span>(yt))</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a><span class="do">##&#39;fkf&#39; instead requires a matrix of the elements of the variances of the measurement error </span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>GGt <span class="ot">=</span> <span class="fu">diag</span>(theta[<span class="st">&quot;ME_1&quot;</span>]<span class="sc">^</span><span class="dv">2</span>, <span class="fu">nrow</span>(yt))</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a><span class="do">##&#39;fkf.SP&#39; returns only the log-likelihood numeric value when Verbose = FALSE, whilst &#39;fkf&#39; returns a list of filtered values</span></span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>logLik <span class="ot">=</span> <span class="fu">ifelse</span>(SP,</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>                <span class="sc">-</span> <span class="fu">fkf.SP</span>(<span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct, <span class="at">Tt =</span> Tt, <span class="at">Zt =</span> Zt, <span class="at">HHt =</span> HHt, <span class="at">GGt =</span> GGt, <span class="at">yt =</span> yt, <span class="at">verbose =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>logLik,</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>                <span class="sc">-</span> <span class="fu">fkf</span>(<span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct, <span class="at">Tt =</span> Tt, <span class="at">Zt =</span> Zt, <span class="at">HHt =</span> HHt, <span class="at">GGt =</span> GGt, <span class="at">yt =</span> yt)<span class="sc">$</span>logLik</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(logLik)</span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Step 2 - Perform MLE:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#This test estimates parameters through &#39;optim&#39;.</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Please run the complete chunk for a fair comparison:</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Initial estimates</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>gbm_par <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">alpha =</span> <span class="dv">0</span>, <span class="at">alpha_rn =</span> <span class="fl">0.01</span>, <span class="at">sigma =</span> <span class="fl">0.1</span>, <span class="at">ME_1 =</span> <span class="fl">0.05</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="do">###MLE through the &#39;fkf.SP&#39; function:</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>start <span class="ot">=</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>fkf.SP.gbm <span class="ot">=</span> <span class="fu">optim</span>(<span class="at">par =</span> gbm_par, <span class="at">fn =</span> gbm_mle, <span class="at">SP =</span> T)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>fkf.SP_runtime <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="do">###MLE through the &#39;fkf&#39; function:</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>start <span class="ot">=</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>fkf.gbm <span class="ot">=</span> <span class="fu">optim</span>(<span class="at">par =</span> gbm_par, <span class="at">fn =</span> gbm_mle, <span class="at">SP =</span> F)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>fkf_runtime <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() <span class="sc">-</span> start</span></code></pre></div>
+<p>The presence of a large number of NA’s in the observation matrix
+(i.e. object ‘yt’) has resulted in significantly different MLE scores of
+both functions (see Example 3 for more details):</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">rbind</span>(<span class="at">FKF.SP =</span> <span class="sc">-</span> fkf.SP.gbm<span class="sc">$</span>value, <span class="at">FKF =</span> <span class="sc">-</span> fkf.gbm<span class="sc">$</span>value))</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             [,1]</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF.SP 10221.345</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF    -4778.489</span></span></code></pre></div>
+<p>Regardless, The MLE process applying both functions has returned
+nearly identical estimated parameters:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">rbind</span>(<span class="at">FKF.SP =</span> fkf.SP.gbm<span class="sc">$</span>par, <span class="at">FKF =</span> fkf.gbm<span class="sc">$</span>par))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              alpha    alpha_rn     sigma       ME_1</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF.SP -0.02283278 0.001236720 0.2070780 0.03721549</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF    -0.02277886 0.001234892 0.2071917 0.03721757</span></span></code></pre></div>
+<p>As well as a nearly identical call count number for both
+functions:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="at">FKF.SP =</span> fkf.SP.gbm<span class="sc">$</span>counts[<span class="dv">1</span>], <span class="at">FKF =</span> fkf.gbm<span class="sc">$</span>counts[<span class="dv">1</span>]))</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FKF.SP.function    FKF.function </span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             145             153</span></span></code></pre></div>
+<p>A sequential processing approach, however, has significantly
+decreased processing time:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="at">FKF.SP =</span> fkf.SP_runtime, <span class="at">FKF =</span> fkf_runtime))</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time differences in secs</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    FKF.SP       FKF </span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.1532869 2.2233481</span></span></code></pre></div>
+<p>Sequential processing is a significantly faster Kalman filtering
+approach for this particular example due to the large number of
+observations at each time point, the assumption that the variance of the
+disturbances are independent, the large number of NA’s that are observed
+as contracts expired or are made available and the dimensionality of
+argument ‘GGt’ being significantly reduced.</p>
+<p>Finally, the filtered values, which in this case correspond to the
+estimated log of the spot price, are identical through both
+functions:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>ct <span class="ot">&lt;-</span> fkf.SP.gbm<span class="sc">$</span>par[<span class="st">&#39;alpha_rn&#39;</span>] <span class="sc">*</span> TTM</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>dt <span class="ot">&lt;-</span> (fkf.SP.gbm<span class="sc">$</span>par[<span class="st">&#39;alpha&#39;</span>] <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> fkf.SP.gbm<span class="sc">$</span>par[<span class="st">&#39;sigma&#39;</span>]<span class="sc">^</span><span class="dv">2</span>) <span class="sc">*</span> delta_t</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>Zt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="fu">nrow</span>(yt))</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>HHt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(fkf.SP.gbm<span class="sc">$</span>par[<span class="st">&#39;sigma&#39;</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> delta_t)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>Tt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>GGt.SP <span class="ot">&lt;-</span> <span class="fu">rep</span>(fkf.SP.gbm<span class="sc">$</span>par[<span class="st">&#39;ME_1&#39;</span>]<span class="sc">^</span><span class="dv">2</span>, <span class="fu">nrow</span>(yt))</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>GGt <span class="ot">&lt;-</span> <span class="fu">diag</span>(fkf.SP.gbm<span class="sc">$</span>par[<span class="st">&#39;ME_1&#39;</span>]<span class="sc">^</span><span class="dv">2</span>, <span class="fu">nrow</span>(yt))</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>GBM_fkf <span class="ot">&lt;-</span> <span class="fu">fkf</span>(<span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct, <span class="at">Tt =</span> Tt, <span class="at">Zt =</span> Zt, <span class="at">HHt =</span> HHt, <span class="at">GGt =</span> GGt, <span class="at">yt =</span> yt)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>GBM_fkf.SP <span class="ot">&lt;-</span> <span class="fu">fkf.SP</span>(<span class="at">a0 =</span> a0, <span class="at">P0 =</span> P0, <span class="at">dt =</span> dt, <span class="at">ct =</span> ct, <span class="at">Tt =</span> Tt, <span class="at">Zt =</span> Zt, <span class="at">HHt =</span> HHt, <span class="at">GGt =</span> GGt.SP, <span class="at">yt =</span> yt, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>Filtered_values <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">rbind</span>(<span class="at">FKF =</span> GBM_fkf<span class="sc">$</span>att, <span class="at">FKF.SP =</span> GBM_fkf.SP<span class="sc">$</span>att))</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(Filtered_values) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;FKF&quot;</span>, <span class="st">&quot;FKF.SP&quot;</span>)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(Filtered_values))</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           FKF   FKF.SP</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,] 3.032519 3.032519</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,] 2.979634 2.979634</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [3,] 2.970764 2.970764</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [4,] 2.966605 2.966605</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [5,] 3.003469 3.003469</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [6,] 3.007449 3.007449</span></span></code></pre></div>
+</div>
+<div id="example-5---kalman-smoothing" class="section level2">
+<h2>Example 5 - Kalman smoothing:</h2>
+<p>Kalman smoothing is a backward algorithm that allows one to refine
+estimates of previous states, conditional on the filtered observations.
+This is useful when performing expectation maximization (EM) approaches
+to parameter estimation. The ‘FKF.SP’ package features the function
+‘fks.SP’ to perform this through the sequential processing approach. The
+solution to Kalman smoothing through sequential processing is available
+in .</p>
+<p>The ‘fks.SP’ function takes an object of class ‘FKF.SP’, which is
+returned whenever the ‘fkf.SP’ function is called with the argument
+‘verbose = TRUE’.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>GBM_fks.SP <span class="ot">&lt;-</span> <span class="fu">fks.SP</span>(GBM_fkf.SP)</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
