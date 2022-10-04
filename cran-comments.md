@@ -1,5 +1,5 @@
 ## Test environments
-- local R installation, R 4.1.2
+- local R installation, R 4.2.1
 * win-builder (devel)
 * R-hub Windows Server 2022 64-bit (r-devel)
 * R-hub ubuntu-gcc-release (r-release)

@@ -339,7 +339,9 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 			&dblone, 
 			tmpmxSP, &m,
 			&Ftinv_output[SP + d * t], &intone,
-			&dblzero, &Kt_output[m * t + (m * SP)], &m FCONE FCONE);
+			&dblzero, &Kt_output[m_x_d * t + (m * SP)], &m FCONE FCONE);
+
+		// print_array(&Kt_output[m_x_d * t + (m * SP)], m, 1, "Kalman Gain");
 
 		#ifdef DEBUGME
 	    if(SP == SP_int)
@@ -357,7 +359,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
 			&m, &intone, &intone, 
 			&dblone, 
-			&Kt_output[m * t + (m * SP)], &m,
+			&Kt_output[m_x_d * t + (m * SP)], &m,
 			&vt_output[SP + d * t], &intone,
 			&dblone, at, &m FCONE FCONE);
 
@@ -376,7 +378,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		F77_NAME(dgemm)(dont_transpose, transpose, 
 			&m,  &m, &intone, 
 			&dblminusone,  tmpmxSP, &m,
-			&Kt_output[m * t + (m * SP)], &m,
+			&Kt_output[m_x_d * t + (m * SP)], &m,
 			&dblone, Pt, &m FCONE FCONE);
       
 		#ifdef DEBUGME
@@ -511,9 +513,10 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
         //Kt = tmpmxSP %*% tmpFtinv
 		F77_NAME(dgemm)(dont_transpose, dont_transpose, 
 			&m, &intone, &intone, 
-			&dblone, tmpmxSP, &m,
+			&dblone, 
+			tmpmxSP, &m,
 			&Ftinv_output[SP + d * t], &intone,
-			&dblzero, &Kt_output[m * t + (m * SP)], &m FCONE FCONE);
+			&dblzero, &Kt_output[m_x_d * t + (m * SP)], &m FCONE FCONE);
 	
 		  
 		//Step 4 - Correct State Vector mean and Covariance:
@@ -522,7 +525,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		//att = Kt %*% V + att
 		F77_NAME(dgemm)(dont_transpose, dont_transpose, &m,
 			&intone, &intone, &dblone,
-			&Kt_output[m * t + (m * SP)], &m,
+			&Kt_output[m_x_d * t + (m * SP)], &m,
 			&vt_output[SP + d * t], &intone,
 			&dblone, at, &m FCONE FCONE);
     	
@@ -532,7 +535,7 @@ Rprintf("\nNumber of NAs in iter %i: %i\n", t, NAsum);
 		F77_NAME(dgemm)(dont_transpose, transpose, &m,
 			&m, &intone, &dblminusone,
 			tmpmxSP, &m,
-			&Kt_output[m * t + (m * SP)], &m,
+			&Kt_output[m_x_d * t + (m * SP)], &m,
 			&dblone, Pt, &m FCONE FCONE);
 		  	  	
 		//Step 5 - Update Log-Likelihood Score:
@@ -1424,6 +1427,7 @@ void cfks_SP(/* Inputs */
 	double *tmpmxm = (double *) Calloc(m_x_m, double);
 	double *tmpPt = (double *) Calloc(m_x_m, double);
 	double *tmpN = (double *) Calloc(m_x_m, double);
+	double *tmpr = (double *) Calloc(m, double);
 
 	/* NA detection */
 	int NAsum;
@@ -1489,11 +1493,12 @@ void cfks_SP(/* Inputs */
 
 		// Move from r_t,0 to r_(t-1),pt:
 		// r_(t-1),p_t = t(T_t-1) %*% r_t,0:
+		F77_NAME(dcopy)(&m, r, &intone, tmpr, &intone);
 		F77_NAME(dgemm)(transpose, dont_transpose, 
 			&m, &intone, &m, 
 			&dblone,
 			&Tt[m_x_m * t * incTt], &m,
-			r, &m,
+			tmpr, &m,
 			&dblzero, r, &m FCONE FCONE);
 
 		// N_(t-1,p_t )= t(T_t-1) N_(t,0) T_(t-1)
@@ -1513,10 +1518,8 @@ void cfks_SP(/* Inputs */
 			tmpmxm, &m,
 			&Tt[m_x_m * t * incTt], &m,
 			&dblzero, N, &m FCONE FCONE);
-
 		// print_array(N, m, m, "N at start:");
 		// print_array(r, m, intone, "r at start:");
-		
 		/************************/
 		/* check for NA's in observation yt[,t] */
 		/************************/
@@ -1549,12 +1552,12 @@ void cfks_SP(/* Inputs */
 				F77_NAME(dgemm)(dont_transpose, transpose, 
 					&m, &m, &intone, 
 					&dblminusone,
-					&Kt[m * t + (m * SP)], &m,
+					&Kt[m_x_d * t + (m * SP)], &m,
 					Zt_temp, &m,
 					&dblone, L, &m FCONE FCONE);
 				// 	print_array(L, m, m, "L_t,i:");
 
-				/* N_t,i-1 = t(Z_t) %*% F^-1 %*% Z_t,i + t(L) %*% N_t,i %*% L */
+				/* N_t,i-1 = t(Z_t,i) %*% F^-1 %*% Z_t,i + t(L) %*% N_t,i %*% L */
 				tmp_scalar = Ftinv[(d*t) + SP];
 				// Step 1: tmpmxm = t(Z_t) %*% F^-1 %*% Z_t
 				F77_NAME(dgemm)(dont_transpose, transpose, 
@@ -1594,15 +1597,17 @@ void cfks_SP(/* Inputs */
 				// Step 1: f_t,i^-1 * v_t,i (scalar * scalar)
 				tmp_scalar *= vt[(d*t) + SP];
 				// Step 2: r = t(L_t,i) %*% r_t,i
+		        F77_NAME(dcopy)(&m, r, &intone, tmpr, &intone);
 				F77_NAME(dgemm)(transpose, dont_transpose, 
 					&m,&intone, &m, 
 					&dblone,
 					L, &m,
-					r, &m,
+					tmpr, &m,
 					&dblzero, r, &m FCONE FCONE);
 
 				// Step 3: r_t,i-1 = Zt_tmp + r:
 				F77_NAME(daxpy)(&m, &tmp_scalar, Zt_temp, &intone, r, &intone);
+
 			}
 		}
 		/*******************************************/
@@ -1639,7 +1644,7 @@ void cfks_SP(/* Inputs */
 				F77_NAME(dgemm)(dont_transpose, transpose, 
 					&m, &m, &intone, 
 					&dblminusone,
-					&Kt[m * t + (m * SP)], &m,
+					&Kt[m_x_d * t + (m * SP)], &m,
 					Zt_temp, &m,
 					&dblone, L, &m FCONE FCONE);
 				// print_array(L, m, intone, "L_t,i:");
@@ -1676,11 +1681,12 @@ void cfks_SP(/* Inputs */
 				// Step 1: f_t,i^-1 * v_t,i (scalar * scalar)
 				tmp_scalar *= vt[(d*t) + SP];
 				// Step 2: r = t(L_t,i) %*% r_t,i
+				F77_NAME(dcopy)(&m, r, &intone, tmpr, &intone);
 				F77_NAME(dgemm)(transpose, dont_transpose, 
 					&m,&intone, &m, 
 					&dblone,
 					L, &m,
-					r, &m,
+					tmpr, &m,
 					&dblzero, r, &m FCONE FCONE);
 				// Step 3: r_t,i-1 = Zt_tmp + r:
 				F77_NAME(daxpy)(&m, &tmp_scalar, Zt_temp, &intone, r, &intone);
@@ -1722,7 +1728,7 @@ SEXP fks_SP(SEXP Tt, SEXP Zt,SEXP yt,SEXP vt, SEXP Kt, SEXP Ftinv, SEXP att_inpu
 	SEXP ans, ans_names, class_name;
 	SEXP dim_att, dim_Ptt;
 
-	// Copy att and Ptt - to ensure the input values don't change:
+	// Copy att and Ptt - tao ensure the input values don't change:
 	SEXP att, Ptt;
 	int m_x_n = m * n;
   	int m_x_m_x_n = m * m * n;
@@ -1732,6 +1738,7 @@ SEXP fks_SP(SEXP Tt, SEXP Zt,SEXP yt,SEXP vt, SEXP Kt, SEXP Ftinv, SEXP att_inpu
     //Set dimensions
     F77_NAME(dcopy)(&m_x_n, NUMERIC_POINTER(att_input), &intone, NUMERIC_POINTER(att), &intone);
   	F77_NAME(dcopy)(&m_x_m_x_n, NUMERIC_POINTER(Ptt_input), &intone, NUMERIC_POINTER(Ptt), &intone);
+
 
 	cfks_SP(m, d, n,
 		// Input

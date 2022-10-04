@@ -5,8 +5,9 @@
 #'The \code{fkf.SP} function performs fast and flexible Kalman filtering using sequential processing. It is designed for efficient parameter
 #'estimation through maximum likelihood estimation. \code{fkf.SP} wraps the C-function \code{fkf_SP} which relies upon the linear algebra subroutines of BLAS (Basic Linear Algebra Subprograms).
 #'Sequential processing (SP) is a univariate treatment of a multivariate series of observations that increases computational efficiency over traditional Kalman filtering in the general case. SP takes
-#'the additional assumption that the variance of disturbances in the measurement equation are independent. \code{fkf.SP} is based from the \code{fkf} function of the \code{FKF} package but is, in general, a faster Kalman filtering method.
-#'\code{fkf} and \code{fkf.SP} share identical arguments (except for the \code{GGt} argument, see \bold{arguments}). \code{fkf.SP} is compatible with missing observations (i.e. NA's in argument \code{yt}).
+#'the additional assumption that the variance of disturbances in the measurement equation are independent. \code{fkf.SP} is based from the \code{fkf} function of
+#'the \code{FKF} package but is, in general, a faster Kalman filtering method.
+#'\code{fkf} and \code{fkf.SP} share identical arguments (except for the \code{GGt} argument, see \bold{Arguments}). \code{fkf.SP} is compatible with missing observations (i.e. NA's in argument \code{yt}).
 #'
 #'@param a0 A \code{vector} giving the initial value/estimation of the state variable
 #'@param P0 A \code{matrix} giving the variance of a0
@@ -18,7 +19,7 @@
 #'@param GGt A \code{vector} giving the diagonal elements of the \code{matrix} for the variance of disturbances of the measurement equation. Covariance between disturbances
 #'is not supported under the sequential processing method.
 #'@param yt A \code{matrix} containing the observations. "NA"- values are allowed
-#'@param verbose A \code{logical}. When \code{verbose = TRUE}, A \code{list} object is output, which provides the filtered state variables and variances of the Kalman filter.
+#'@param verbose A \code{logical}. When \code{verbose = TRUE}, A \code{list} object is output, which provides filtered values of the Kalman filter (see \bold{Value}).
 #'
 #'@details
 #'
@@ -26,7 +27,10 @@
 #'\bold{Parameters}:
 #'
 #'The \code{fkf.SP} function builds upon the \code{fkf} function of the \code{FKF} package by adjusting the Kalman filtering algorithm to
-#'utilize sequential processing. Sequential processing can result in significant decreases in processing time over the traditional Kalman filter algorithm. The \code{fkf.SP} and \code{fkf} functions feature highly similar
+#'utilize sequential processing. Sequential processing can result in significant decreases in processing time over the traditional Kalman filter algorithm. Sequential processing has been
+#'empirically shown to grow linearly with respect to the dimensions of \mjeqn{y_t}{y[t]}, rather than exponentially as is the case with the traditional Kalman filter algorithm (Aspinall et al., 2022, P104).
+#'
+#'The \code{fkf.SP} and \code{fkf} functions feature highly similar
 #'arguments for compatibility purposes; only argument \code{GGt} has changed from an \code{array} type object to a \code{vector} or \code{matrix} type object.
 #'The \code{fkf.SP} function takes the additional assumption over the \code{fkf} function that the variance of the disturbances of the measurement
 #'equation are independent; a requirement of SP (see below).
@@ -61,26 +65,26 @@
 #' vector. The parameters admit the following dimensions:
 #'
 #' \tabular{lll}{
-#' \mjeqn{a_t \in R^m}{a[t] \in R^m} \tab \mjeqn{d_t \in R^m}{d[t] \in R^m} \tab \mjeqn{\eta_t \in R^m}{eta[t] \in R^m} \cr
+#' \mjeqn{a_t \in R^m}{a(t) \in R^m} \tab \mjeqn{d_t \in R^m}{d[t] \in R^m} \tab \mjeqn{\eta_t \in R^m}{eta(t) \in R^m} \cr
 #' \mjeqn{T_t \in R^{m \times m}}{T[t] \in R^(m * m )} \tab \mjeqn{H_t \in R^{m \times m}}{H[t] \in R^(m * m)} \tab \cr
-#' \mjeqn{y_t \in R^d}{y[t] \in R^d} \tab \mjeqn{c_t \in R^d}{c[t] \in R^d} \tab \mjeqn{\epsilon_t \in R^d}{epsilon[t] \in R^d} \cr
-#' \mjeqn{Z_t \in R^{d \times m}}{Z[t] \in R^(d * m)} \tab \mjeqn{G_t \in R^{d \times d}}{G[t]
+#' \mjeqn{y_t \in R^d}{y(t) \in R^d} \tab \mjeqn{c_t \in R^d}{c(t) \in R^d} \tab \mjeqn{\epsilon_t \in R^d}{epsilon(t) \in R^d} \cr
+#' \mjeqn{Z_t \in R^{d \times m}}{Z(t) \in R^(d * m)} \tab \mjeqn{G_t \in R^{d \times d}}{G(t)
 #' \in R^(d * d)} \tab
 #' }
 #'
-#' Note that \code{fkf.SP} takes as input \code{HHt} and \code{GGt} which corresponds to \mjeqn{H_t H_t'}{H[t] * t(H[t])} and
-#' \mjeqn{diag(G_t)^2}{diag(G[t])^2} respectively.
+#' Note that \code{fkf.SP} takes as input \code{HHt} and \code{GGt} which corresponds to \mjeqn{H_t H_t'}{H(t) * t(H(t)} and
+#' \mjeqn{diag(G_t)^2}{diag(G(t))^2} respectively.
 #'
 #'
 #'\bold{Sequential Processing Iteration}:
 #'
-#'Traditional Kalman filtering takes the entire observational vector \mjeqn{y_t}{y[t]} as the items for analysis. SP
-#'is an alternate approach that filters the elements of \mjeqn{y_t}{y[t]} one at a time. Sequential processing is described in the textbook of Durbin and Koopman (2001) and is described below.
+#'Traditional Kalman filtering takes the entire observational vector \mjeqn{y_t}{y(t)} as the items for analysis. SP
+#'is an alternate approach that filters the elements of \mjeqn{y_t}{y(t)} one at a time. Sequential processing is described in the textbook of Durbin and Koopman (2001) and is described below.
 #'
 #'Let \mjeqn{p}{p} equal the number of observations at time \mjeqn{t}{t} (i.e. when considering possible missing observations \mjeqn{p \leq {d}}{p <= d}).
 #'The SP iteration involves treating the vector series: \mjeqn{y_1,\cdots,y_n}{y_1,...,y_n} instead as the scalar series
 #'\mjeqn{y_{1,1},\cdots,y_{(1,p)},y_{2,1},\cdots,y_{(n,p_n)}}{y_{1,1},...,y_{(1,p)},y_{2,1},...,y_{(n,p_n )}}. This univariate treatment of the multivariate series
-#'has the advantage that the function of the covariance matrix, \mjeqn{F_t}{F[t]}, becomes \mjeqn{1 \times 1}{1 * 1}, avoiding the calculation of both the inverse and determinant of
+#'has the advantage that the function of the covariance matrix, \mjeqn{F_t}{F(t)}, becomes \mjeqn{1 \times 1}{1 * 1}, avoiding the calculation of both the inverse and determinant of
 #'a \mjeqn{p \times p}{p * p} matrix. This can increase computational efficiency (especially under the case of many observations, i.e. \mjeqn{p}{p} is large)
 #'
 #'For any time point, the observation vector is given by:
@@ -89,13 +93,13 @@
 #'
 #'The filtering equations are written as:
 #'
-#'\mjdeqn{a_{t,i+1} = a_{t,i} + K_{t,i} v_{t,i}}{a[t,i+1] = a[t,i] + K[t,i] v[t,i]}
-#'\mjdeqn{P_{t,i+1} = P_{t,i} - K_{t,i} F_{t,i} K_{t,i}'}{P[t,i+1] = P[t,i] - K[t,i] F[t,i] K[t,i]'}
+#'\mjdeqn{a_{t,i+1} = a_{t,i} + K_{t,i} v_{t,i}}{a(t,i+1) = a(t,i) + K(t,i) v(t,i)}
+#'\mjdeqn{P_{t,i+1} = P_{t,i} - K_{t,i} F_{t,i} K_{t,i}'}{P(t,i+1) = P(t,i) - K(t,i) F(t,i) K(t,i)'}
 #'Where:
-#'\mjdeqn{\hat y_{t,i} = c_t + Z_t \cdot a_{t,i}}{^y[t] = c[t] + Z[t] * a[t,i]}
-#'\mjdeqn{v_{t,i}=y_{t,i}-\hat y_{t,i}}{v[t,i]=y[t,i]-\hat y[t,i]}
-#'\mjdeqn{F_{t,i} = Z_{t,i} P_{t,i} Z_{t,i}'+ GGt_{t,i}}{GGt[t,i]}
-#'\mjdeqn{K_{t,i} = P_{t,i} Z_{t,i}' F_{t,i}^{-1}}{A}
+#'\mjdeqn{\hat y_{t,i} = c_t + Z_t \cdot a_{t,i}}{^y(t) = c(t) + Z(t) * a(t,i)}
+#'\mjdeqn{v_{t,i}=y_{t,i}-\hat y_{t,i}}{v(t,i)=y(t,i)- y_hat(t,i)}
+#'\mjdeqn{F_{t,i} = Z_{t,i} P_{t,i} Z_{t,i}'+ GGt_{t,i}}{F(t,i) = Z(t,i) P(t,i) Z(t,i)' + Gt(t,i)}
+#'\mjdeqn{K_{t,i} = P_{t,i} Z_{t,i}' F_{t,i}^{-1}}{K(t,i) = P(t,i) Z(t,i)' F(t,i)^-1}
 #'\mjdeqn{i = 1, \cdots, p}{i = 1, ..., p}
 #'
 #'Transition from time \mjeqn{t}{t} to \mjeqn{t+1}{t+1} occurs through the standard transition equations.
@@ -110,25 +114,25 @@
 #'
 #'Where the log-likelihood of observations is:
 #'
-#'\mjdeqn{log L = \sum_t^n{log L_t}}{log L = \sum_t^n(log L[t])}
+#'\mjdeqn{log L = \sum_t^n{log L_t}}{log L = \sum_t^n(log L(t))}
 #'
 #'
 #'@return
 #'A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
 #'
-#'When \code{verbose = TRUE}, a list with the following elements is also returned, corresponding to the filtered state variables and covariances of the Kalman filter algorithm:
+#'When \code{verbose = TRUE}, an S3 class of type 'fkf.SP' with the following elements is also returned, corresponding to the filtered state variables and covariances of the Kalman filter algorithm:
 #'
-#' \tabular{rl}{
+#'\tabular{rl}{
 #'     \code{att} \tab A \eqn{m \times n}{m * n}-matrix containing the filtered state variables, i.e. \code{att[,t]} = \eqn{a_{t|t}}{a(t|t)}.\cr
 #'     \code{at} \tab A \eqn{m \times (n + 1)}{m * (n + 1)}-matrix containing the predicted state variables, i.e. \code{at[,t]} = \eqn{a_t}{a(t)}.\cr
-#'     \code{Ptt} \tab A \eqn{m \times m \times n}{m * m * n}-array containing the variance of att, i.e. \code{Ptt[,,t]} = \eqn{P_{t}}{P(t)}.\cr
-#'     \code{Pt} \tab A \eqn{m \times m \times (n+1}{m * m * (n+1)}-array containing the variance of at, i.e. \code{Pt[,,t]} = \eqn{P_{t}}{P(t)}.\cr
-#'     \code{yt} \tab A \eqn{d \times n}{d * n }matrix containing the input observations.\cr
-#'     \code{Tt} \tab either a \eqn{m \times m \times n}{m * m * n} or a \eqn{m \times m \times 1}{m * m * 1} array, depending on the argument provided. \cr
-#'     \code{Zt} \tab either a \eqn{d \times m \times n}{d * m * n} or a \eqn{d \times m \times 1}{d * m * 1} array, depending on the argument provided.. \cr
-#'     \code{Ftinv} \tab A \eqn{d \times n}{d * n }matrix containing the scalar inverse of the prediction error variances. \cr
-#'     \code{vt} \tab A \eqn{d \times n}{d * n }matrix containing the observation error.\cr
-#'     \code{Kt} \tab A \eqn{m \time d \times n}{m * d * n }-array containing the Kalman gain of state variables at each observation.\cr
+#'     \code{Ptt} \tab A \eqn{m \times m \times n}{m * m * n}-array containing the variance of att, i.e. \code{Ptt[,,t]} = \eqn{P_{t|t}}{P(t|t)}.\cr
+#'     \code{Pt} \tab A \eqn{m \times m \times (n+1)}{m * m * (n+1)}-array containing the variance of at, i.e. \code{Pt[,,t]} = \eqn{P_{t}}{P(t)}.\cr
+#'     \code{yt} \tab A \eqn{d \times n}{d * n }-matrix containing the input observations.\cr
+#'     \code{Tt} \tab either a \eqn{m \times m \times n}{m * m * n} or a \eqn{m \times m \times 1}{m * m * 1}-array, depending on the argument provided. \cr
+#'     \code{Zt} \tab either a \eqn{d \times m \times n}{d * m * n} or a \eqn{d \times m \times 1}{d * m * 1}-array, depending on the argument provided. \cr
+#'     \code{Ftinv} \tab A \eqn{d \times n}{d * n }-matrix containing the scalar inverse of the prediction error variances. \cr
+#'     \code{vt} \tab A \eqn{d \times n}{d * n }-matrix containing the observation error.\cr
+#'     \code{Kt} \tab A \eqn{m \times d \times n}{m * d * n }-array containing the Kalman gain of state variables at each observation.\cr
 #'     \code{logLik} \tab The log-likelihood.
 #'}
 #'
@@ -145,6 +149,8 @@
 #'
 #'@references
 #'
+#'Aspinall, T. W., Harris, G., Gepp, A., Kelly, S., Southam, C., and Vanstone, B. (2022). \emph{The Estimation of Commodity Pricing Models with Applications in Capital Investments}. \href{https://research.bond.edu.au/en/studentTheses/the-estimation-of-commodity-pricing-models-with-applications-in-c}{Available Online}.
+#'
 #'Anderson, B. D. O. and Moore. J. B. (1979). \emph{Optimal Filtering} Englewood Cliffs: Prentice-Hall.
 #'
 #'Fahrmeir, L. and tutz, G. (1994) \emph{Multivariate Statistical Modelling Based on Generalized Linear Models.} Berlin: Springer.
@@ -153,8 +159,8 @@
 #'
 #'Durbin, James, and Siem Jan Koopman (2001). \emph{Time series analysis by state space methods.} Oxford university press.
 #'
-#'David Luethi, Philipp Erb and Simon Otziger (2018). FKF: Fast Kalman Filter. R package version 0.1.5.
-#'https://CRAN.R-project.org/package=FKF
+#'David Luethi, Philipp Erb and Simon Otziger (2018). FKF: Fast Kalman Filter. \href{'https://CRAN.R-project.org/package=FKF}{R package version 0.2.3.}
+#
 #'
 #'@examples
 #'
@@ -278,7 +284,7 @@ fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, verbose = FALSE){
                      missing(Tt), missing(Zt), missing(HHt), missing(GGt),
                      missing(yt))
   if(any(missing.values)) stop(paste("Input Arguments", paste(inputs[missing.values], collapse = ", "), "missing."))
-  if(class(verbose) != "logical") stop("verbose must be of class 'logical'")
+  if(any(class(verbose) != "logical")) stop("verbose must be of class 'logical' (i.e., TRUE/FALSE)")
 
   if(is.null(dim(yt))) stop("yt cannot be of class numeric!")
 

@@ -4,6 +4,8 @@ More outputs are now returned from the 'fkf.SP' function when 'verbose' is set t
 
 The 'fks.SP' function has been added, which is a Kalman smoothing implementation written in compiled C code and using the solution described in the textbook of Durbin and Koopman (2001): "Time Series Analysis by State Space Methods).
 
+The vignette of the package has been updated with an example of Kalman smoothing.
+
 # FKF.SP 0.2.0
 
 The 'fkf.SP' function now includes the 'verbose' argument, allowing for filtered values to be returned as a list object.
