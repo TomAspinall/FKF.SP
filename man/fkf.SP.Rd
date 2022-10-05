@@ -283,5 +283,6 @@ Koopman, S. J., Shephard, N., Doornik, J. A. (1999). Statistical algorithms for 
 
 Durbin, James, and Siem Jan Koopman (2001). \emph{Time series analysis by state space methods.} Oxford university press.
 
-David Luethi, Philipp Erb and Simon Otziger (2018). FKF: Fast Kalman Filter. \href{'https://CRAN.R-project.org/package=FKF}{R package version 0.2.3.}
+David Luethi, Philipp Erb and Simon Otziger (2018). FKF: Fast Kalman Filter. R package version 0.2.3.
+'https://CRAN.R-project.org/package=FKF
 }

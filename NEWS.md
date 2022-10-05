@@ -2,7 +2,7 @@
 
 More outputs are now returned from the 'fkf.SP' function when 'verbose' is set to true. These are 'yt', 'Tt', 'Zt', 'Ftinv', 'vt', 'Kt'
 
-The 'fks.SP' function has been added, which is a Kalman smoothing implementation written in compiled C code and using the solution described in the textbook of Durbin and Koopman (2001): "Time Series Analysis by State Space Methods).
+The 'fks.SP' function has been added, which is a Kalman smoothing implementation written in compiled C code and using the solution described in the textbook of Durbin and Koopman (2001): "Time Series Analysis by State Space Methods".
 
 The vignette of the package has been updated with an example of Kalman smoothing.
 
