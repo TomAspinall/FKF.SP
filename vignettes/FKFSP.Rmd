@@ -462,7 +462,7 @@ print(head(Filtered_values))
 
 ## Example 5 - Kalman smoothing:
 
-Kalman smoothing is an algorithm that allows one to refine estimates of previous states, conditional on the filtered observations. This is useful when performing expectation maximization (EM) approaches to parameter estimation. The 'FKF.SP' package features the function 'fks.SP' to perform this through the sequential processing approach. The solution to Kalman smoothing through sequential processing is available in the documentation of the 'fks.SP' function.
+Kalman smoothing is an algorithm that allows one to refine estimates of previous states, conditional on the filtered observations. This is useful when performing expectation maximization (EM) approaches to parameter estimation. The 'FKF.SP' package allows for Kalman smoothing in two ways. The first way is to simply set the argument "smoothing = TRUE" when performing Kalman filtering through the 'fkf.SP' function. Alternatively, if a state space model has been filtered with the argument 'verbose = TRUE', then the 'fks.SP' function may be used on the returned object. The solution to Kalman smoothing through sequential processing is available in the documentation of the 'fks.SP' function.
 
 The 'fks.SP' function takes an object of class 'fkf.SP', which is returned whenever the 'fkf.SP' function is called with the argument 'verbose = TRUE'.
 
@@ -496,41 +496,56 @@ yt = rbind(yt)
 # Run each function call 10,000 times to minimize variance:
 N_iterations <- 1e4
 
+## # Kalman filtering, and then smoothing, through each approach:
+
 # FKF:
 set.seed(1)
 FKF_start_time <- Sys.time()
 for(i in 1:N_iterations){
+  # Filtering:
   FKF_Nile_filtered <- fkf(HHt = matrix(HHt), GGt = matrix(GGt), a0 = a0, P0 = P0, dt = dt, ct = ct,
                  Zt = Zt, Tt = Tt, yt = rbind(yt))
-  
+  # Smoothing:
   FKF_Nile_smoothed <- fks(FKF_Nile_filtered)
 }
 FKF_runtime <- difftime(Sys.time(), FKF_start_time, units = "secs")
 
-# FKF.SP:
+
+# FKF.SP - Approach 1:
+# Filtering, and then smoothing, using 'smoothing = TRUE':
 set.seed(1)
-FKF_SP_start_time <- Sys.time()
+FKF.SP_1_start_time <- Sys.time()
 for(i in 1:N_iterations){
-  FKF_SP_Nile_filtered <- fkf.SP(HHt = matrix(HHt), GGt = matrix(GGt), a0 = a0, P0 = P0, dt = dt, ct = ct,
-                 Zt = Zt, Tt = Tt, yt = rbind(yt), verbose = TRUE)
-  
-  FKF_SP_Nile_smoothed <- fks.SP(FKF_SP_Nile_filtered)
+  FKF.SP_1_Nile_filtered_smoothed <- fkf.SP(HHt = matrix(HHt), GGt = matrix(GGt), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                 Zt = Zt, Tt = Tt, yt = rbind(yt), smoothing = TRUE)
 }
-FKF_SP_runtime <- difftime(Sys.time(), FKF_SP_start_time, units = "secs")
+FKF.SP_1_runtime <- difftime(Sys.time(), FKF.SP_1_start_time, units = "secs")
 
+# FKF.SP - Approach 2:
+# Filtering a model using 'verbose = TRUE', and then smoothing using the returned object:
+set.seed(1)
+FKF.SP_2_start_time <- Sys.time()
+for(i in 1:N_iterations){
+  # Filtering:
+  FKF.SP_Nile_filtered <- fkf.SP(HHt = matrix(HHt), GGt = matrix(GGt), a0 = a0, P0 = P0, dt = dt, ct = ct,
+                 Zt = Zt, Tt = Tt, yt = rbind(yt), verbose = TRUE)
+  # Smoothing:
+  FKF.SP_2_Nile_smoothed <- fks.SP(FKF.SP_Nile_filtered)
+}
+FKF.SP_2_runtime <- difftime(Sys.time(), FKF.SP_2_start_time, units = "secs")
 
-print(c(fkf.SP = FKF_SP_runtime, fkf = FKF_runtime))
+print(c("FKF.SP (Approach 1)" = FKF.SP_1_runtime, "FKF.SP (Approach 2)" = FKF.SP_2_runtime, "FKF"= FKF_runtime))
 
 ```
 
-Utilizing Sequential Processing has decreased processing time when both filtering and smoothing.
+Utilizing Sequential Processing has decreased processing time when both filtering and smoothing. Approach 1 of Kalman filtering, and then smoothing, through the FKF.SP package results in both the Kalman filter and Kalman smoother recursions being run in the same compiled C function call.
 
-Finally, the smoothed values returned by both functions are identical:
+Finally, the smoothed values returned by the three functions are identical:
 
 ```{r}
 
-Smoothed_values <- t(rbind(FKF = FKF_SP_Nile_smoothed$ahatt, FKF.SP = FKF_Nile_smoothed$ahatt))
-colnames(Smoothed_values) <- c("FKF", "FKF.SP")
+Smoothed_values <- t(rbind(FKF.SP_1_Nile_filtered_smoothed$ahatt, FKF.SP_2_Nile_smoothed$ahatt, FKF_Nile_smoothed$ahatt))
+colnames(Smoothed_values) <- c("FKF.SP (Approach 1)","FKF.SP (Approach 2)", "FKF")
 
 print(head(Smoothed_values))
 

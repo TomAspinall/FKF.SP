@@ -114,7 +114,7 @@
 #'
 #'@export
 fks.SP <- function (FKF.SP_obj) {
-  if (any(class(FKF.SP_obj) != 'fkf.SP')) stop('Input must be an object of class FKF.SP')
+  if (!class(FKF.SP_obj)[1] %in% c('fkf.SP', 'fkfs.SP')) stop('Input must be an object of class FKF.SP')
   return(.Call("fks_SP",
                FKF.SP_obj$Tt,
                FKF.SP_obj$Zt,

@@ -3,9 +3,9 @@
 #'@description
 #'\loadmathjax
 #'The \code{fkf.SP} function performs fast and flexible Kalman filtering using sequential processing. It is designed for efficient parameter
-#'estimation through maximum likelihood estimation. \code{fkf.SP} wraps the C-function \code{fkf_SP} which relies upon the linear algebra subroutines of BLAS (Basic Linear Algebra Subprograms).
-#'Sequential processing (SP) is a univariate treatment of a multivariate series of observations that increases computational efficiency over traditional Kalman filtering in the general case. SP takes
-#'the additional assumption that the variance of disturbances in the measurement equation are independent. \code{fkf.SP} is based from the \code{fkf} function of
+#'estimation through maximum likelihood estimation. Sequential processing (SP) is a univariate treatment of a multivariate series of observations
+#'that increases computational efficiency over traditional Kalman filtering in the general case. SP takes the additional assumption that the
+#'variance of disturbances in the measurement equation are independent. \code{fkf.SP} is based from the \code{fkf} function of
 #'the \code{FKF} package but is, in general, a faster Kalman filtering method.
 #'\code{fkf} and \code{fkf.SP} share identical arguments (except for the \code{GGt} argument, see \bold{Arguments}). \code{fkf.SP} is compatible with missing observations (i.e. NA's in argument \code{yt}).
 #'
@@ -20,6 +20,7 @@
 #'is not supported under the sequential processing method.
 #'@param yt A \code{matrix} containing the observations. "NA"- values are allowed
 #'@param verbose A \code{logical}. When \code{verbose = TRUE}, A \code{list} object is output, which provides filtered values of the Kalman filter (see \bold{Value}).
+#'@param smoothing A \code{logical}. When \code{smoothing = TRUE}, Kalman smoothing is additionally performed and smoothed values returned (see \bold{Value}).
 #'
 #'@details
 #'
@@ -116,6 +117,13 @@
 #'
 #'\mjdeqn{log L = \sum_t^n{log L_t}}{log L = \sum_t^n(log L(t))}
 #'
+#'\bold{Compiled Code}:
+#'
+#'\code{fkf.SP} wraps the C-functions \code{fkf_SP},  \code{fkf_SP_verbose} and  \code{fkfs_SP},  which each rely upon the linear algebra subroutines of BLAS (Basic Linear Algebra Subprograms).
+#'These C-functions are called when \code{verbose = FALSE}, \code{verbose = TRUE} and \code{smoothing = TRUE}, respectively.
+#'
+#'The difference in these compiled functions are in the values returned from them. The \code{fkfs_SP} also performs Kalman filtering and subsequently smoothing
+#'within the singular compiled C-code function.
 #'
 #'@return
 #'A \code{numeric} value corresponding to the log-likelihood calculated by the Kalman filter. Ideal for maximum likelihood estimation through optimization routines such as \code{optim}.
@@ -136,16 +144,22 @@
 #'     \code{logLik} \tab The log-likelihood.
 #'}
 #'
+#'In addition to the elements above, the following elements corresponding to the smoothed values output from Kalman smoothing are also returned when \code{smoothing = TRUE}.
+#'The \code{fks.SP} provides more detail regarding Kalman smoothing.
+#'
+#'\tabular{rl}{
+#'   \code{ahatt} \tab  A \eqn{m \times n}{m * n}-matrix containing the
+#'   smoothed state variables, i.e. \code{ahatt[,t]} = \mjeqn{a_{t|n}}{a(t|n)}\cr
+#'   \code{Vt} \tab  A \eqn{m \times m \times n}{m * m * n}-array
+#'   containing the variances of \code{ahatt}, i.e. \code{Vt[,,t]} = \mjeqn{P_{t|n}}{P(t|n)}
+#'}
+#'
 #'\bold{Log-Likelihood Values:}
 #'
 #'When there are no missing observations (i.e. "NA" values) in argument \code{yt}, the return of function \code{fkf.SP} and the \code{logLik}
 #'object returned within the list of function \code{fkf} are identical. When NA's are present, however, log-likelihood values returned
-#'by \code{fkf.SP} are always higher. The log-likelihood value of the C code of \code{FKF} is instantiated through the calculation of the first term of the log-likelihood function,
-#'\mjeqn{- 0.5 \times n \times d \times log(2\pi)}{- 0.5 * n * d * log(2 PI)}, where \mjeqn{n}{n} is the number of columns of argument
-#'\code{yt} and \mjeqn{d}{d} is the number of rows of argument \code{yt}. Under the assumption that there are
-#'missing observations, \mjeqn{d}{d} would instead become \mjeqn{d_t}{d_t}, where \mjeqn{d_t \leq d \forall t}{d_t <= d forall t}.
-#'Whilst this doesn't influence parameter estimation, because observation matrix \code{yt} and thus the offset resulting from this is kept constant during maximum likelihood estimation,
-#'this does result in low bias of the log-likelihood values output by \code{fkf}.
+#'by \code{fkf.SP} are always higher. This is due to low bias in the log-likelihood values output by \code{fkf}, but does not influence parameter
+#'estimation. Further details are available within this package's vignette.
 #'
 #'@references
 #'
@@ -277,7 +291,7 @@
 #'                  Zt = Zt, Tt = Tt)
 #'
 #'@export
-fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, verbose = FALSE){
+fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, verbose = FALSE, smoothing = FALSE){
   inputs <- c("a0", "P0", "dt", "ct", "Tt", "Zt", "HHt", "GGt", "yt")
 
   ##Missing arguments check:
@@ -338,14 +352,16 @@ fkf.SP = function (a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, verbose = FALSE){
   if(any(invalid_d_dimensions)) stop(paste("Dimension(s) in", paste(d_dimensions[invalid_d_dimensions], collapse = ", "), "do not equal nrow(yt) ('d')"))
 
   ###Call Kalman filter function:
-  if(verbose){
-    ans <- .Call("fkf_SP_verbose", a0, P0, dt, ct, Tt, Zt, HHt, GGt,
-                 yt, PACKAGE = "FKF.SP")
-  }  else {
-    ans <- .Call("fkf_SP", a0, P0, dt, ct, Tt, Zt, HHt, GGt,
-                 yt, PACKAGE = "FKF.SP")
+  # Priority: fkf_SP, fkfs_SP, fks_SP:
+  if(!(smoothing || verbose)){
+    ans <- .Call("fkf_SP", a0, P0, dt, ct, Tt, Zt, HHt, GGt,yt, PACKAGE = "FKF.SP")
+  } else{
+    if(smoothing){
+      ans <- .Call("fkfs_SP", a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, PACKAGE = "FKF.SP")
+    } else{
+      ans <- .Call("fkf_SP_verbose", a0, P0, dt, ct, Tt, Zt, HHt, GGt, yt, PACKAGE = "FKF.SP")
+    }
   }
-
   return(ans)
 }
 

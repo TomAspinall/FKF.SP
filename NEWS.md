@@ -1,3 +1,14 @@
+# FKF.SP 0.3.1
+
+Minor bug fixes to the "init.c" and "fkf_SP" files, as per the "additional issues" guidelines of CRAN.
+
+The compiled C code: "fkfs_SP" has been added, which combines Kalman filtering and smoothing into a singular function.
+
+The "smoothing" logical argument has been added to the 'fkf.SP' function.
+
+Minor documentation changes to reflect the additional argument.
+
+
 # FKF.SP 0.3.0
 
 More outputs are now returned from the 'fkf.SP' function when 'verbose' is set to true. These are 'yt', 'Tt', 'Zt', 'Ftinv', 'vt', 'Kt'
