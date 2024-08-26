@@ -2,3 +2,5 @@
 inst/doc
 .Rhistory
 .RData
+test.R*
+deploy.R*

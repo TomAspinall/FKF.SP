@@ -1,3 +1,7 @@
+# FKF.SP 0.3.2
+
+Added 'mathjaxr' to the NAMESPACE, updated Roxygen
+
 # FKF.SP 0.3.1
 
 Minor bug fixes to the "init.c" and "fkf_SP" files, as per the "additional issues" guidelines of CRAN.
