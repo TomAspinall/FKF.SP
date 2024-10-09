@@ -5,3 +5,4 @@
 ^CRAN-RELEASE$
 test.R*
 deploy.R*
+^CRAN-SUBMISSION$
