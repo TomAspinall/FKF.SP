@@ -1,6 +1,6 @@
 Package: FKF.SP
 Title: Fast Kalman Filtering Through Sequential Processing
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: c(person("Thomas", "Aspinall", email = "tomaspinall2512@gmail.com", 
          role = c("aut", "cre"),
          comment = c(ORCID = "0000-0002-6968-1989")),
@@ -28,7 +28,7 @@ Description: Fast and flexible Kalman filtering and smoothing implementation uti
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.2
 RdMacros:
     mathjaxr
 Imports:

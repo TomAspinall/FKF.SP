@@ -3,3 +3,4 @@
 export(fkf.SP)
 export(fks.SP)
 useDynLib(FKF.SP)
+import(mathjaxr)
