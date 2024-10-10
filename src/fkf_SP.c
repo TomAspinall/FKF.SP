@@ -5,6 +5,7 @@
 #include <Rmath.h>
 #include <R_ext/BLAS.h>
 #include <R_ext/Lapack.h>
+#define M_PI 3.14159265358979323846
 #ifndef FCONE
 #define FCONE
 #endif
@@ -669,7 +670,7 @@ void cfkf_SP_verbose(
 #endif
 
 	// Update the final Log-Likelihood Score:
-	*loglik -= 0.5 * N_obs * log(2 * PI);
+	*loglik -= 0.5 * N_obs * log(2 * M_PI);
 
 	// Memory clean - R_Free vectors / matrices:
 	R_Free(NAindices);
@@ -1399,7 +1400,7 @@ void cfkf_SP(
 #endif
 
 	// Update the final Log-Likelihood Score:
-	*loglik -= 0.5 * N_obs * log(2 * PI);
+	*loglik -= 0.5 * N_obs * log(2 * M_PI);
 
 	// Memory clean - R_Free vectors / matrices:
 	R_Free(NAindices);
@@ -2484,7 +2485,7 @@ void cfkfs_SP(
 		t++;
 	}
 	// Update the final Log-Likelihood Score:
-	*loglik -= 0.5 * N_obs * log(2 * PI);
+	*loglik -= 0.5 * N_obs * log(2 * M_PI);
 
 #ifdef DEBUGME
 	Rprintf("\n---------- Kalman filter Complete ----------\n");
