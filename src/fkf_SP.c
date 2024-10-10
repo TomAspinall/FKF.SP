@@ -671,18 +671,18 @@ void cfkf_SP_verbose(
 	// Update the final Log-Likelihood Score:
 	*loglik -= 0.5 * N_obs * log(2 * PI);
 
-	// Memory clean - free vectors / matrices:
-	free(NAindices);
-	free(positions);
-	free(yt_temp);
-	free(ct_temp);
-	free(Zt_temp);
-	free(GGt_temp);
-	free(Zt_t);
-	free(Zt_tSP);
-	free(at);
-	free(Pt);
-	// free(Kt);
+	// Memory clean - R_Free vectors / matrices:
+	R_Free(NAindices);
+	R_Free(positions);
+	R_Free(yt_temp);
+	R_Free(ct_temp);
+	R_Free(Zt_temp);
+	R_Free(GGt_temp);
+	R_Free(Zt_t);
+	R_Free(Zt_tSP);
+	R_Free(at);
+	R_Free(Pt);
+	// R_Free(Kt);
 
 #ifdef DEBUGME
 	Rprintf("\n---------- Recursion Complete ----------\n");
@@ -1401,18 +1401,18 @@ void cfkf_SP(
 	// Update the final Log-Likelihood Score:
 	*loglik -= 0.5 * N_obs * log(2 * PI);
 
-	// Memory clean - free vectors / matrices:
-	free(NAindices);
-	free(positions);
-	free(yt_temp);
-	free(ct_temp);
-	free(Zt_temp);
-	free(GGt_temp);
-	free(Zt_t);
-	free(Zt_tSP);
-	free(at);
-	free(Pt);
-	free(Kt);
+	// Memory clean - R_Free vectors / matrices:
+	R_Free(NAindices);
+	R_Free(positions);
+	R_Free(yt_temp);
+	R_Free(ct_temp);
+	R_Free(Zt_temp);
+	R_Free(GGt_temp);
+	R_Free(Zt_t);
+	R_Free(Zt_tSP);
+	R_Free(at);
+	R_Free(Pt);
+	R_Free(Kt);
 
 #ifdef DEBUGME
 	Rprintf("\n---------- Recursion Complete ----------\n");
@@ -1793,12 +1793,12 @@ void cfks_SP(/* Inputs */
 		t--;
 	}
 
-	// Memory clean - free vectors / matrices:
-	free(NAindices);
-	free(positions);
-	free(Zt_temp);
-	free(Zt_t);
-	free(Zt_NA);
+	// Memory clean - R_Free vectors / matrices:
+	R_Free(NAindices);
+	R_Free(positions);
+	R_Free(Zt_temp);
+	R_Free(Zt_t);
+	R_Free(Zt_NA);
 
 	// Rprintf("\n---------- Function End ----------\n");
 }
@@ -2683,19 +2683,19 @@ void cfkfs_SP(
 
 	// print_array(att_smooth, m, n, "att_smoothed end:");
 
-	// Memory clean - free vectors / matrices:
-	free(NAindices);
-	free(Zt_t);
-	free(positions);
-	free(Zt_temp);
-	free(Zt_tSP);
-	free(yt_temp);
-	free(ct_temp);
-	free(GGt_temp);
-	free(at);
-	free(Pt);
+	// Memory clean - R_Free vectors / matrices:
+	R_Free(NAindices);
+	R_Free(Zt_t);
+	R_Free(positions);
+	R_Free(Zt_temp);
+	R_Free(Zt_tSP);
+	R_Free(yt_temp);
+	R_Free(ct_temp);
+	R_Free(GGt_temp);
+	R_Free(at);
+	R_Free(Pt);
 
-	// free(Kt);
+	// R_Free(Kt);
 }
 /*********************************************************************************/
 /* ---------- ------------ End Kalman Filter and smoother ------------ --------- */
