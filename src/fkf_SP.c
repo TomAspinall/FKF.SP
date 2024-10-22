@@ -6,12 +6,13 @@
 #include <R_ext/BLAS.h>
 #include <R_ext/Lapack.h>
 #define M_PI 3.14159265358979323846
+
 #ifndef FCONE
 #define FCONE
 #endif
 
 /* Macro to transform an index of a 2-dimensional array into an index of a vector */
-#define IDX(i, j, dim0) (i) + (j) * (dim0)
+#define IDX(i, j, dim0) (i) + (j) * (dim0);
 
 /*#define DEBUG_PRINT*/
 // #define DEBUGME
@@ -1403,17 +1404,20 @@ void cfkf_SP(
 	*loglik -= 0.5 * N_obs * log(2 * M_PI);
 
 	// Memory clean - R_Free vectors / matrices:
-	R_Free(NAindices);
-	R_Free(positions);
-	R_Free(yt_temp);
-	R_Free(ct_temp);
-	R_Free(Zt_temp);
-	R_Free(GGt_temp);
-	R_Free(Zt_t);
-	R_Free(Zt_tSP);
-	R_Free(at);
-	R_Free(Pt);
-	R_Free(Kt);
+	R_Free(tmpmxSP);
+	R_Free(tmpmxm);
+
+	free(positions);
+	free(yt_temp);
+	free(ct_temp);
+	free(Zt_temp);
+	free(GGt_temp);
+	free(Zt_t);
+	free(Zt_tSP);
+	free(NAindices);
+	free(Kt);
+	free(at);
+	free(Pt);
 
 #ifdef DEBUGME
 	Rprintf("\n---------- Recursion Complete ----------\n");
@@ -1795,11 +1799,20 @@ void cfks_SP(/* Inputs */
 	}
 
 	// Memory clean - R_Free vectors / matrices:
-	R_Free(NAindices);
-	R_Free(positions);
-	R_Free(Zt_temp);
-	R_Free(Zt_t);
-	R_Free(Zt_NA);
+	R_Free(tmpmxm);
+	R_Free(tmpPt);
+	R_Free(tmpN);
+	R_Free(tmpr);
+	R_Free(N);
+	R_Free(r);
+	R_Free(L);
+	R_Free(identity_matrix);
+
+	free(NAindices);
+	free(positions);
+	free(Zt_temp);
+	free(Zt_t);
+	free(Zt_NA);
 
 	// Rprintf("\n---------- Function End ----------\n");
 }
@@ -2685,18 +2698,27 @@ void cfkfs_SP(
 	// print_array(att_smooth, m, n, "att_smoothed end:");
 
 	// Memory clean - R_Free vectors / matrices:
-	R_Free(NAindices);
-	R_Free(Zt_t);
-	R_Free(positions);
-	R_Free(Zt_temp);
-	R_Free(Zt_tSP);
-	R_Free(yt_temp);
-	R_Free(ct_temp);
-	R_Free(GGt_temp);
-	R_Free(at);
-	R_Free(Pt);
+	free(NAindices);
+	free(positions);
+	free(yt_temp);
+	free(ct_temp);
+	free(Zt_temp);
+	free(GGt_temp);
+	free(Zt_t);
+	free(Zt_tSP);
+	free(Z_SP);
+	free(d_t);
+	free(at);
+	free(Pt);
 
-	// R_Free(Kt);
+	R_Free(tmpmxSP);
+	R_Free(tmpmxm);
+	R_Free(tmpN);
+	R_Free(tmpr);
+	R_Free(N);
+	R_Free(r);
+	R_Free(L);
+	R_Free(identity_matrix);
 }
 /*********************************************************************************/
 /* ---------- ------------ End Kalman Filter and smoother ------------ --------- */
