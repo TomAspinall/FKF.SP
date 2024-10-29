@@ -1,3 +1,7 @@
+# FKF.SP 0.3.3
+
+Upgraded compiled C functions to be compatible with R 4.4.1. Split C functions into separate files to make them more readable.
+
 # FKF.SP 0.3.2
 
 Added 'mathjaxr' to the NAMESPACE, updated Roxygen
