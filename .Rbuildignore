@@ -6,3 +6,7 @@
 test.R*
 deploy.R*
 ^CRAN-SUBMISSION$
+.gitignore
+test.rmd
+test.R
+deploy.rmd
