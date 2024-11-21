@@ -2,7 +2,7 @@
 inst/doc
 .Rhistory
 .RData
-test.R*
+test/**
 deploy.R*
 CRAN-SUBMISSION
 .vscode

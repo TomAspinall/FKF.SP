@@ -461,7 +461,7 @@ void cfkfs_SP(
                 // Compute Kt = Pt %*% t(Zt[SP,,i * incZt]) %*% (1/Ft)
 
 #ifdef DEBUGME
-                Rprintf("\n New Ft: %f \n", Ft);
+                Rprintf("\n New Ft: %f \n", tmp_scalar);
 #endif
 
                 // Inv Ft:
