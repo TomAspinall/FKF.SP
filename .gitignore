@@ -6,3 +6,5 @@ test/**
 deploy.R*
 CRAN-SUBMISSION
 .vscode
+src/*.o
+src/*.dll

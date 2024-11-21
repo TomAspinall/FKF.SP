@@ -12,7 +12,6 @@
 #define FCONE
 #endif
 
-// #define DEBUG_PRINT
 // #define DEBUGME
 
 void print_array(double *data, int i, int j, const char *lab);

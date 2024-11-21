@@ -550,10 +550,6 @@ void cfkf_SP_verbose(
          &dblone, Pt, &m FCONE FCONE);
 
 #ifdef DEBUGME
-        print_array(Pt, m, m, "Ptp1:");
-#endif
-
-#ifdef DEBUGME
         print_array(at, 1, m, "at:");
         print_array(Pt, m, m, "Pt:");
         Rprintf("\n---------- iteration nr. %i ----------\n", t + 1);
