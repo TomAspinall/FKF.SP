@@ -19,8 +19,6 @@ void cfkf_SP(
 {
 	/*  Notation: */
 
-	Rprintf("Hello");
-
 	// m: the dimension of the state vector
 	// d: the dimension of observations
 	// n: the total number of observations
