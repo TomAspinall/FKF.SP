@@ -1,3 +1,9 @@
+# FKF.SP 0.3.4
+
+Hotfix - correctly coercing variable `d_t` from an array of `double` to an array of `int` within fkfs_sp.c
+Warnings - wrapping definitions in `utils.h` with #ifndef for additional compatibility
+Hotfix - removing rprintf statement that snuck into production, deployed compiled code (oops)
+
 # FKF.SP 0.3.3
 
 Upgraded compiled C functions to be compatible with R 4.4.1. Split C functions into separate files to make them more readable.
