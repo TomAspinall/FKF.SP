@@ -70,7 +70,7 @@ void cfkfs_SP(
     // Save Z_SP for all observations:
     double *Z_SP = malloc(sizeof(double) * (m * d * n));
     // Save the total number of observations at every t:
-    double *d_t = malloc(sizeof(double) * n);
+    int *d_t = malloc(sizeof(int) * n);
 
     // SEQUENTIAL PROCESSING DEFINED VARIABLES:
 
